@@ -157,6 +157,15 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
       return;
     }
 
+    const q = Number(quantity);
+    const min = Number(minStockAlert);
+    const up = Number(unitPrice);
+    const cp = Number(costPrice);
+    if (![q, min, up, cp].every(Number.isFinite) || q < 0 || min < 0 || up < 0 || cp < 0) {
+      toast(t('add_item_error_numbers') || 'Enter valid non-negative numbers for quantity, min stock, and prices.', 'error');
+      return;
+    }
+
     const selectedSup = suppliers.find((s) => s.id === supplierId);
 
     if (editingItem) {
@@ -166,10 +175,10 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
         barcode: barcode || String(Math.floor(100000000000 + Math.random() * 900000000000)),
         category,
         description,
-        quantity: Number(quantity),
-        minStockAlert: Number(minStockAlert),
-        unitPrice: Number(unitPrice),
-        costPrice: Number(costPrice),
+        quantity: q,
+        minStockAlert: min,
+        unitPrice: up,
+        costPrice: cp,
         unitOfMeasure,
         location,
         supplierId,
@@ -187,10 +196,10 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
         barcode: barcode || String(Math.floor(100000000000 + Math.random() * 900000000000)),
         category,
         description,
-        quantity: Number(quantity),
-        minStockAlert: Number(minStockAlert),
-        unitPrice: Number(unitPrice),
-        costPrice: Number(costPrice),
+        quantity: q,
+        minStockAlert: min,
+        unitPrice: up,
+        costPrice: cp,
         unitOfMeasure,
         location,
         supplierId,

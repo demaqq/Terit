@@ -27,7 +27,9 @@ app.use(express.json({ limit: '1mb' }));
 app.use('/api', apiRouter);
 
 // Serve static assets from dist in production
-const distPath = path.resolve(__dirname, 'dist');
+const distPath = path.basename(__dirname) === 'dist'
+  ? __dirname
+  : path.resolve(__dirname, 'dist');
 app.use(express.static(distPath));
 
 // Fallback to index.html for SPA

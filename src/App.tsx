@@ -15,13 +15,16 @@ import { PODetailsModal } from './components/PODetailsModal';
 import { PricingModal } from './components/PricingModal';
 import { OnboardingModal } from './components/OnboardingModal';
 import { AlertsModal } from './components/AlertsModal';
+import { ColdChainModal } from './components/ColdChainModal';
+import { EveningMarkdownModal } from './components/EveningMarkdownModal';
+import { LandedCostModal } from './components/LandedCostModal';
 import { MobileSyncModal } from './components/MobileSyncModal';
 import { ETRReceiptModal } from './components/ETRReceiptModal';
 import { AuthGateView } from './components/AuthGateView';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { BarcodeScannerListener } from './lib/posHardware';
 import { InventoryItem, Supplier, PurchaseOrder } from './types/inventory';
-import { BotMessageSquare, Boxes, Sparkles } from 'lucide-react';
+import { BotMessageSquare, Boxes, Sparkles, Thermometer, Tag, Ship } from 'lucide-react';
 
 const DashboardView = lazy(() => import('./components/DashboardView').then((m) => ({ default: m.DashboardView })));
 const InventoryView = lazy(() => import('./components/InventoryView').then((m) => ({ default: m.InventoryView })));
@@ -93,13 +96,16 @@ const ViewFallback = () => (
 );
 
 function AppContent() {
-  const { user, authLoading, isGuestMode, hasCompletedOnboarding, items, purchaseOrders, t } = useInventory();
+  const { user, authLoading, isGuestMode, hasCompletedOnboarding, items, purchaseOrders, businessType, t } = useInventory();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isPricingOpen, setIsPricingOpen] = useState(false);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [isAlertsOpen, setIsAlertsOpen] = useState(false);
+  const [isColdChainOpen, setIsColdChainOpen] = useState(false);
+  const [isMarkdownOpen, setIsMarkdownOpen] = useState(false);
+  const [isLandedCostOpen, setIsLandedCostOpen] = useState(false);
   const [isSyncGuideOpen, setIsSyncGuideOpen] = useState(false);
 
   // Modal States
@@ -361,6 +367,39 @@ function AppContent() {
         <Sparkles className="w-3.5 h-3.5 text-slate-900 group-hover:rotate-12 transition-transform" />
       </button>
 
+      {/* Cold-Chain Log Quick Button (Pharmacy only) */}
+      {businessType === 'pharmacy' && (
+        <button
+          onClick={() => setIsColdChainOpen(true)}
+          className="hidden lg:flex fixed bottom-24 right-6 z-30 p-3 rounded-full bg-sky-500 text-white font-bold shadow-xl shadow-sky-500/20 hover:scale-105 transition-all items-center gap-2 cursor-pointer"
+          title={t('coldchain_title') || 'Cold-Chain Temperature Log'}
+        >
+          <Thermometer className="w-4 h-4" />
+        </button>
+      )}
+
+      {/* Evening Markdown Quick Button (Supermarket only) */}
+      {businessType === 'supermarket' && (
+        <button
+          onClick={() => setIsMarkdownOpen(true)}
+          className="hidden lg:flex fixed bottom-24 right-6 z-30 p-3 rounded-full bg-amber-500 text-slate-950 font-bold shadow-xl shadow-amber-500/20 hover:scale-105 transition-all items-center gap-2 cursor-pointer"
+          title={t('markdown_title') || 'Evening Markdown'}
+        >
+          <Tag className="w-4 h-4" />
+        </button>
+      )}
+
+      {/* Landed Cost Quick Button (General Trade / Store) */}
+      {(businessType === 'other' || businessType === 'store') && (
+        <button
+          onClick={() => setIsLandedCostOpen(true)}
+          className="hidden lg:flex fixed bottom-24 right-6 z-30 p-3 rounded-full bg-indigo-500 text-white font-bold shadow-xl shadow-indigo-500/20 hover:scale-105 transition-all items-center gap-2 cursor-pointer"
+          title={t('landed_title') || 'Landed Cost Calculator'}
+        >
+          <Ship className="w-4 h-4" />
+        </button>
+      )}
+
       {/* Footer */}
       <footer className="border-t border-slate-900/10 dark:border-white/10 bg-white/70 dark:bg-slate-950/60 backdrop-blur-2xl py-4 text-center text-xs text-slate-700 dark:text-slate-300 mb-14 lg:mb-0">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
@@ -403,6 +442,9 @@ function AppContent() {
 
       {/* SMS & Email Alerts Sentinel Modal */}
       <AlertsModal isOpen={isAlertsOpen} onClose={() => setIsAlertsOpen(false)} />
+      <ColdChainModal isOpen={isColdChainOpen} onClose={() => setIsColdChainOpen(false)} />
+      <EveningMarkdownModal isOpen={isMarkdownOpen} onClose={() => setIsMarkdownOpen(false)} />
+      <LandedCostModal isOpen={isLandedCostOpen} onClose={() => setIsLandedCostOpen(false)} />
 
       {/* Android Mobile App Sync Guide Modal */}
       <MobileSyncModal isOpen={isSyncGuideOpen} onClose={() => setIsSyncGuideOpen(false)} />

@@ -32,6 +32,11 @@ export interface InventoryItem {
   isBundle?: boolean;
   bundleComponents?: BundleComponent[]; // component items & quantities
   costingMethod?: CostingMethod;
+  // Operational attributes (tailored business models)
+  isQuarantined?: boolean; // Pharmacy: block dispensing of expired/quarantined batches
+  originalUnitPrice?: number; // Supermarket/Shop: base retail price before markdown
+  discountPct?: number; // Reversible markdown/clearance percentage (0-100)
+  packSize?: number; // Pieces per carton/crate/bundle for unit conversion
   createdAt: string;
   updatedAt: string;
 }
@@ -304,5 +309,11 @@ export interface CompanyProfile {
   paymentDate?: string;
   lastPaymentTxId?: string;
   onboardingCompleted?: boolean;
+  // Operational compliance logs (tailored business models)
+  coldChainLastInspection?: string; // ISO date of last fridge inspection
+  coldChainTempC?: number; // Last recorded fridge temperature (°C)
+  coldChainInspectorNote?: string;
+  yardLastInspection?: string;
+  yardInspectorNote?: string;
 }
 

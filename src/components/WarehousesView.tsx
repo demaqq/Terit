@@ -102,6 +102,13 @@ export const WarehousesView: React.FC<WarehousesViewProps> = ({
       )}
 
       {/* Warehouse Cards Grid */}
+      {warehouses.length === 0 ? (
+        <div className="text-center py-16 text-slate-500 dark:text-slate-400">
+          <div className="text-4xl mb-3">🏭</div>
+          <div className="font-semibold">{t('warehouses_empty') || 'No warehouses yet.'}</div>
+          <div className="text-xs mt-1">{t('warehouses_empty_desc') || 'Add your first warehouse to start tracking stock locations.'}</div>
+        </div>
+      ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {warehouses.map((wh) => {
           const whItems = items.filter((i) => i.location === wh.name);
@@ -193,6 +200,7 @@ export const WarehousesView: React.FC<WarehousesViewProps> = ({
           );
         })}
       </div>
+      )}
     </div>
   );
 };

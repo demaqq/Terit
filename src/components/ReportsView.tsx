@@ -46,8 +46,9 @@ interface ReportsViewProps {
 const PIE_COLORS = ['#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316'];
 
 export const ReportsView: React.FC<ReportsViewProps> = ({ onOpenCreatePO }) => {
-  const { items, businessType, theme, t } = useInventory();
+  const { items, businessType, theme, t, transactions } = useInventory();
   const safeItems = useMemo(() => (Array.isArray(items) ? items : []), [items]);
+  const safeTransactions = useMemo(() => (Array.isArray(transactions) ? transactions : []), [transactions]);
   const safeT = typeof t === 'function' ? t : (key: string) => key;
   const safeBusinessType = (typeof businessType === 'string' ? businessType : 'other') as any;
   const [timeRange, setTimeRange] = useState<'30d' | '90d' | '12m'>('12m');
@@ -242,16 +243,21 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onOpenCreatePO }) => {
   }, [safeItems]);
 
   const supermarketDayDemand = useMemo(() => {
-    return [
-      { day: 'Mon', volume: 420, peakHour: '17:00' },
-      { day: 'Tue', volume: 390, peakHour: '18:00' },
-      { day: 'Wed', volume: 460, peakHour: '17:30' },
-      { day: 'Thu', volume: 510, peakHour: '18:30' },
-      { day: 'Fri', volume: 780, peakHour: '19:00' },
-      { day: 'Sat', volume: 920, peakHour: '14:00' },
-      { day: 'Sun', volume: 840, peakHour: '13:00' },
-    ];
-  }, []);
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const buckets = days.map((day) => ({ day, volume: 0, peakHourCounts: {} as Record<string, number> }));
+    safeTransactions.forEach((tx: any) => {
+      const d = tx?.createdAt ? new Date(tx.createdAt) : null;
+      if (!d || isNaN(d.getTime())) return;
+      const b = buckets[d.getDay()];
+      b.volume += Math.abs(Number(tx?.quantity) || 0);
+      const h = `${String(d.getHours()).padStart(2, '0')}:00`;
+      b.peakHourCounts[h] = (b.peakHourCounts[h] || 0) + 1;
+    });
+    return buckets.map((b) => {
+      const peakHour = Object.entries(b.peakHourCounts).sort((a, c) => c[1] - a[1])[0]?.[0] || '—';
+      return { day: b.day, volume: b.volume, peakHour };
+    });
+  }, [safeTransactions]);
 
   const storeBayUtilizationHistory = useMemo(() => {
     return [
@@ -265,25 +271,54 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onOpenCreatePO }) => {
   }, []);
 
   const shopSizeSellThrough = useMemo(() => {
-    return [
-      { size: 'XS', stock: 8, soldPct: 74, demandIndex: 'Moderate' },
-      { size: 'S', stock: 14, soldPct: 88, demandIndex: 'High' },
-      { size: 'M', stock: 2, soldPct: 97, demandIndex: 'Critical Spike' },
-      { size: 'L', stock: 16, soldPct: 84, demandIndex: 'High' },
-      { size: 'XL', stock: 19, soldPct: 56, demandIndex: 'Overstocked' },
-      { size: 'XXL', stock: 6, soldPct: 62, demandIndex: 'Moderate' },
-    ];
-  }, []);
+    // Live-derived: aggregate real inventory SKUs by size variant.
+    const bySize = new Map<string, { stock: number; minAlert: number }>();
+    safeItems.forEach((item) => {
+      const size = (item?.size || '').trim();
+      if (!size) return;
+      const cur = bySize.get(size) || { stock: 0, minAlert: 0 };
+      cur.stock += Number(item?.quantity) || 0;
+      cur.minAlert += Number(item?.minStockAlert) || 0;
+      bySize.set(size, cur);
+    });
+    if (bySize.size === 0) return [];
+    const maxStock = Math.max(...Array.from(bySize.values()).map((v) => v.stock), 1);
+    return Array.from(bySize.entries())
+      .map(([size, v]) => {
+        const soldPct = Math.max(0, Math.min(100, Math.round(100 - (v.stock / maxStock) * 100)));
+        let demandIndex = 'Moderate';
+        if (v.stock <= 0) demandIndex = 'Critical Spike';
+        else if (v.stock <= v.minAlert) demandIndex = 'Critical Spike';
+        else if (v.stock >= maxStock * 0.8) demandIndex = 'Overstocked';
+        else if (v.stock <= maxStock * 0.4) demandIndex = 'High';
+        return { size, stock: v.stock, soldPct, demandIndex };
+      })
+      .sort((a, b) => a.size.localeCompare(b.size));
+  }, [safeItems]);
 
   const minimarketPeakHours = useMemo(() => {
-    return [
-      { slot: '06:00 - 09:00 (Breakfast)', count: 185, topItem: 'Milk & Fresh Bread' },
-      { slot: '09:00 - 12:00 (Morning)', count: 95, topItem: 'Coffee & Water' },
-      { slot: '12:00 - 14:00 (Lunch)', count: 160, topItem: 'Snacks & Soda' },
-      { slot: '14:00 - 17:00 (Afternoon)', count: 110, topItem: 'Confectionery' },
-      { slot: '17:00 - 21:00 (Evening Rush)', count: 245, topItem: 'Dinner Groceries & Dairy' },
+    const slots = [
+      { slot: '06:00 - 09:00 (Breakfast)', range: [6, 9], count: 0, topItems: {} as Record<string, number> },
+      { slot: '09:00 - 12:00 (Morning)', range: [9, 12], count: 0, topItems: {} as Record<string, number> },
+      { slot: '12:00 - 14:00 (Lunch)', range: [12, 14], count: 0, topItems: {} as Record<string, number> },
+      { slot: '14:00 - 17:00 (Afternoon)', range: [14, 17], count: 0, topItems: {} as Record<string, number> },
+      { slot: '17:00 - 21:00 (Evening Rush)', range: [17, 21], count: 0, topItems: {} as Record<string, number> },
     ];
-  }, []);
+    safeTransactions.forEach((tx: any) => {
+      const d = tx?.createdAt ? new Date(tx.createdAt) : null;
+      if (!d || isNaN(d.getTime())) return;
+      const h = d.getHours();
+      const slot = slots.find((s) => h >= s.range[0] && h < s.range[1]);
+      if (!slot) return;
+      slot.count += 1;
+      const name = tx?.itemName || tx?.sku;
+      if (name) slot.topItems[name] = (slot.topItems[name] || 0) + 1;
+    });
+    return slots.map((s) => {
+      const topItem = Object.entries(s.topItems).sort((a, c) => c[1] - a[1])[0]?.[0] || '—';
+      return { slot: s.slot, count: s.count, topItem };
+    });
+  }, [safeTransactions]);
 
   const handlePrint = () => {
     window.print();

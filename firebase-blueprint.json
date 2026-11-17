@@ -52,6 +52,10 @@
         "isBundle": { "type": "boolean" },
         "bundleComponents": { "type": "array" },
         "costingMethod": { "type": "string", "enum": ["fifo", "lifo", "wac"] },
+        "isQuarantined": { "type": "boolean" },
+        "originalUnitPrice": { "type": "number" },
+        "discountPct": { "type": "number" },
+        "packSize": { "type": "number" },
         "createdAt": { "type": "string", "format": "date-time" },
         "updatedAt": { "type": "string", "format": "date-time" }
       },

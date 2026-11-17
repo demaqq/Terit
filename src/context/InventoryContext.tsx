@@ -1123,14 +1123,14 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const postLedgerEntry = async (
     entryData: Omit<StockLedgerEntry, 'id' | 'userId' | 'syncStatus' | 'createdAt' | 'updatedAt'>
   ): Promise<boolean> => {
-    const id = 'ledger-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+    const id = 'ledger-' + crypto.randomUUID();
     const ts = now();
     const entry: StockLedgerEntry = {
       ...entryData,
       id,
       userId: user?.uid,
       syncStatus: isOnline && user ? 'synced' : 'pending',
-      localId: isOnline && user ? undefined : 'local-' + Date.now(),
+      localId: isOnline && user ? undefined : 'local-' + crypto.randomUUID(),
       createdAt: ts,
       updatedAt: ts,
     };
@@ -1160,7 +1160,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             reason: `Bundle ${entry.type === 'assembly' ? 'assembly' : 'disassembly'}: ${bundleItem.name}`,
             syncStatus: entry.syncStatus ?? 'synced',
           };
-          setLedgerEntries((prev) => [{ ...compEntry, id: 'ledger-comp-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7), createdAt: ts, updatedAt: ts, userId: user?.uid, syncStatus: entry.syncStatus ?? 'synced', localId: 'local-comp-' + Date.now() }, ...prev]);
+          setLedgerEntries((prev) => [{ ...compEntry, id: 'ledger-comp-' + crypto.randomUUID(), createdAt: ts, updatedAt: ts, userId: user?.uid, syncStatus: entry.syncStatus ?? 'synced', localId: 'local-comp-' + crypto.randomUUID() }, ...prev]);
         }
       }
     }
@@ -1237,7 +1237,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       return false;
     }
 
-    const id = 'item-' + Date.now();
+    const id = 'item-' + crypto.randomUUID();
     const ts = now();
     const defaultLoc = locations.find((l) => l.isDefault);
     const newItem: InventoryItem = {
@@ -1329,7 +1329,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const addLocation = async (
     locData: Omit<Location, 'id' | 'createdAt' | 'updatedAt'>
   ): Promise<boolean> => {
-    const id = 'loc-' + Date.now();
+    const id = 'loc-' + crypto.randomUUID();
     const ts = now();
     const newLoc: Location = {
       ...locData,
@@ -1770,7 +1770,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     supData: Omit<Supplier, 'id' | 'createdAt' | 'updatedAt'>
   ): Promise<boolean> => {
     const now = new Date().toISOString();
-    const id = 'sup-' + Date.now();
+    const id = 'sup-' + crypto.randomUUID();
     const newSup: Supplier = {
       ...supData,
       id,
@@ -1821,7 +1821,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     poData: Omit<PurchaseOrder, 'id' | 'createdAt' | 'updatedAt'>
   ): Promise<boolean> => {
     const now = new Date().toISOString();
-    const id = 'po-' + Date.now();
+    const id = 'po-' + crypto.randomUUID();
     let totalAmount = 0;
     const totalLandedCost = poData.totalLandedCost || 0;
 
@@ -1994,7 +1994,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     whData: Omit<Warehouse, 'id' | 'createdAt'>
   ): Promise<boolean> => {
     const now = new Date().toISOString();
-    const id = 'wh-' + Date.now();
+    const id = 'wh-' + crypto.randomUUID();
     const newWH: Warehouse = {
       ...whData,
       id,

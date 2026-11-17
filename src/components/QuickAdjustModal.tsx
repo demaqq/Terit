@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, ArrowDownLeft, ArrowUpRight, RefreshCw } from 'lucide-react';
+import { X, ArrowDownLeft, ArrowUpRight, RefreshCw, AlertCircle } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
+import { useToast } from '../components/Toast';
 
 interface QuickAdjustModalProps {
   isOpen: boolean;
@@ -22,7 +23,8 @@ export const QuickAdjustModal: React.FC<QuickAdjustModalProps> = ({
   onClose,
   targetItemId,
 }) => {
-  const { items, quickAdjustStock, t } = useInventory();
+  const { items, quickAdjustStock, businessType, t } = useInventory();
+  const { toast } = useToast();
   const [selectedItemId, setSelectedItemId] = useState(targetItemId || items[0]?.id || '');
   const [adjustType, setAdjustType] = useState<'in' | 'out' | 'set'>('in');
   const [amount, setAmount] = useState(1);
@@ -60,6 +62,11 @@ export const QuickAdjustModal: React.FC<QuickAdjustModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedItemId || !currentItem) return;
+
+    if (businessType === 'pharmacy' && adjustType === 'out' && currentItem.isQuarantined) {
+      toast(t('pharmacy_quarantined_blocked') || 'This batch is quarantined — dispensing blocked.', 'error');
+      return;
+    }
 
     const localizedReason = REASON_KEY_MAP[reason] ? t(REASON_KEY_MAP[reason]) : reason;
     await quickAdjustStock(selectedItemId, delta, localizedReason, referenceNumber.trim() || undefined);
@@ -108,6 +115,28 @@ export const QuickAdjustModal: React.FC<QuickAdjustModalProps> = ({
               <span className="font-mono font-bold text-slate-900 dark:text-white text-sm">
                 {currentQty} {currentItem.unitOfMeasure} ({currentItem.location})
               </span>
+            </div>
+          )}
+
+          {/* Pharmacy FEFO / Quarantine guardrail (tailored business model) */}
+          {businessType === 'pharmacy' && currentItem && (currentItem.isQuarantined || currentItem.expiryDate) && (
+            <div className={`p-3 rounded-xl border text-xs flex items-start gap-2 ${
+              currentItem.isQuarantined
+                ? 'bg-rose-500/10 border-rose-500/30 text-rose-700 dark:text-rose-300'
+                : 'bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300'
+            }`}>
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <div>
+                {currentItem.isQuarantined && (
+                  <div className="font-bold">{t('pharmacy_quarantined_batch') || 'Quarantined batch — dispensing blocked.'}</div>
+                )}
+                {currentItem.expiryDate && (
+                  <div>
+                    {(t('pharmacy_expiry') || 'Expiry')}: {currentItem.expiryDate}
+                    {currentItem.batchNumber ? ` · ${(t('pharmacy_batch') || 'Batch')}: ${currentItem.batchNumber}` : ''}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
