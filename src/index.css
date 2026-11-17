@@ -1,0 +1,335 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --terit-amber: #D45B25;
+  --terit-amber-bright: #E8632B;
+  --terit-amber-hover: #B84A1D;
+  --terit-amber-bg: rgba(212, 91, 37, 0.12);
+  --terit-amber-text: #9c3c13;
+  --terit-radius: 0.85rem;
+  --terit-shadow: 0 12px 32px -8px rgba(17, 22, 37, 0.10), 0 2px 6px -1px rgba(17, 22, 37, 0.05);
+  --terit-shadow-lg: 0 24px 50px -14px rgba(17, 22, 37, 0.16), 0 4px 12px -2px rgba(17, 22, 37, 0.06);
+  --terit-border: rgba(255, 255, 255, 0.65);
+  --terit-border-hover: rgba(212, 91, 37, 0.35);
+  --terit-text-muted: #3a4256;
+  --terit-bg-muted: rgba(234, 227, 210, 0.95);
+  --terit-glass-bg: linear-gradient(155deg, rgba(234, 227, 210, 0.85) 0%, rgba(255, 255, 255, 0.58) 100%);
+  --terit-glass-sub-bg: linear-gradient(155deg, rgba(234, 227, 210, 0.72) 0%, rgba(245, 240, 228, 0.52) 100%);
+  --terit-glass-border: 1px solid rgba(255, 255, 255, 0.75);
+  --terit-glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  --terit-glass-shadow: 0 16px 40px -10px rgba(17, 22, 37, 0.12), 0 3px 8px -1px rgba(17, 22, 37, 0.05);
+  color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
+  --terit-amber: #f59e0b;
+  --terit-amber-bright: #fbbf24;
+  --terit-amber-hover: #d97706;
+  --terit-bg: #030712;
+  --terit-card-bg: rgba(15, 23, 42, 0.62);
+  --terit-card-border: transparent;
+  --terit-input-bg: rgba(15, 23, 42, 0.64);
+  --terit-input-border: rgba(255, 255, 255, 0.10);
+  --terit-ghost-bg: rgba(30, 41, 59, 0.56);
+  --terit-ghost-border: transparent;
+  --terit-body-bg: #030712;
+  --terit-body-bg-img:
+    radial-gradient(1100px circle at -4% -6%, rgba(245, 158, 11, 0.18), transparent 44%),
+    radial-gradient(950px circle at 104% 4%, rgba(56, 189, 248, 0.13), transparent 42%),
+    radial-gradient(850px circle at 50% 108%, rgba(99, 102, 241, 0.11), transparent 48%),
+    linear-gradient(180deg, #030712 0%, #091122 52%, #050a16 100%);
+  --terit-glass-bg: linear-gradient(155deg, rgba(20, 29, 49, 0.72) 0%, rgba(11, 18, 34, 0.56) 100%);
+  --terit-glass-sub-bg: linear-gradient(155deg, rgba(30, 41, 59, 0.60) 0%, rgba(15, 23, 42, 0.48) 100%);
+  --terit-glass-border: transparent;
+  --terit-glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --terit-glass-shadow: 0 16px 42px -10px rgba(0, 0, 0, 0.65), 0 4px 12px -2px rgba(0, 0, 0, 0.45);
+}
+
+@layer base {
+  body {
+    @apply transition-colors duration-200;
+    background-color: #EAE3D2;
+    background-image:
+      radial-gradient(1200px circle at 15% 10%, rgba(255, 255, 255, 0.45), transparent 48%),
+      radial-gradient(1000px circle at 85% 90%, rgba(212, 91, 37, 0.08), transparent 52%),
+      linear-gradient(180deg, #EAE3D2 0%, #E2DAC5 100%);
+    background-attachment: fixed;
+    color: #111625;
+    font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  }
+
+  .dark body {
+    background-color: var(--terit-body-bg);
+    background-image: var(--terit-body-bg-img);
+    background-attachment: fixed;
+    color: #f8fafc;
+  }
+
+  ::selection {
+    background-color: rgba(212, 91, 37, 0.30);
+    color: #111625;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: rgba(17, 22, 37, 0.20);
+    border-radius: 4px;
+  }
+  .dark ::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.18);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(212, 91, 37, 0.40);
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--terit-amber);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .terit-glass {
+    background: var(--terit-glass-bg);
+    backdrop-filter: blur(26px) saturate(180%);
+    -webkit-backdrop-filter: blur(26px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    box-shadow: var(--terit-glass-shadow), var(--terit-glass-highlight);
+    border-radius: var(--terit-radius);
+  }
+
+  .dark .terit-glass {
+    border: none;
+  }
+
+  .terit-glass-sub {
+    background: var(--terit-glass-sub-bg);
+    backdrop-filter: blur(20px) saturate(170%);
+    -webkit-backdrop-filter: blur(20px) saturate(170%);
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    box-shadow: var(--terit-shadow), var(--terit-glass-highlight);
+    border-radius: var(--terit-radius);
+  }
+
+  .dark .terit-glass-sub {
+    border: none;
+  }
+
+  .terit-modal {
+    background: linear-gradient(160deg, rgba(234, 227, 210, 0.92) 0%, rgba(222, 215, 198, 0.88) 100%);
+    backdrop-filter: blur(30px) saturate(185%);
+    -webkit-backdrop-filter: blur(30px) saturate(185%);
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    box-shadow: 0 30px 70px -15px rgba(17, 22, 37, 0.22), inset 0 1px 0 rgba(255, 255, 255, 1);
+  }
+
+  .dark .terit-modal {
+    background: linear-gradient(160deg, rgba(17, 25, 44, 0.90) 0%, rgba(9, 15, 30, 0.84) 100%);
+    border: none;
+    box-shadow: 0 28px 68px -12px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  }
+
+  .terit-card {
+    background: var(--terit-glass-bg);
+    backdrop-filter: blur(24px) saturate(175%);
+    -webkit-backdrop-filter: blur(24px) saturate(175%);
+    border: 1px solid rgba(255, 255, 255, 0.70);
+    border-radius: var(--terit-radius);
+    box-shadow: var(--terit-glass-shadow), var(--terit-glass-highlight);
+  }
+
+  .dark .terit-card {
+    border: none;
+  }
+
+  .terit-input {
+    width: 100%;
+    background-color: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(17, 22, 37, 0.16);
+    border-radius: var(--terit-radius);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    color: #111625;
+    box-shadow: inset 0 1px 2px rgba(17, 22, 37, 0.04);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+  }
+
+  .terit-input::placeholder {
+    color: #5a6275;
+  }
+
+  .dark .terit-input {
+    background-color: var(--terit-input-bg);
+    border: 1px solid var(--terit-input-border);
+    color: #f8fafc;
+    box-shadow: none;
+  }
+
+  .dark .terit-input::placeholder {
+    color: #94a3b8;
+  }
+
+  .terit-input:focus {
+    border-color: var(--terit-amber);
+    box-shadow: 0 0 0 3px rgba(212, 91, 37, 0.22);
+  }
+
+  .terit-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--terit-radius);
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    outline: none;
+    cursor: pointer;
+    border: none;
+  }
+
+  .terit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .terit-btn:focus-visible {
+    box-shadow: 0 0 0 2px rgba(212, 91, 37, 0.35);
+  }
+
+  .terit-btn-primary {
+    background-color: #D45B25;
+    color: #ffffff;
+    box-shadow: 0 4px 14px 0 rgba(212, 91, 37, 0.32);
+  }
+
+  .terit-btn-primary:hover {
+    background-color: #B84A1D;
+    color: #ffffff;
+  }
+
+  .terit-btn-primary:active {
+    transform: scale(0.96);
+  }
+
+  .terit-btn-ghost {
+    background-color: rgba(255, 255, 255, 0.70);
+    color: #111625;
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    box-shadow: 0 1px 3px rgba(17, 22, 37, 0.05);
+  }
+
+  .terit-btn-ghost:hover {
+    background-color: rgba(255, 255, 255, 0.95);
+    color: #D45B25;
+    border-color: rgba(212, 91, 37, 0.35);
+  }
+
+  .dark .terit-btn-ghost {
+    background-color: var(--terit-ghost-bg);
+    color: #e2e8f0;
+    border: none;
+    box-shadow: none;
+  }
+
+  .dark .terit-btn-ghost:hover {
+    background-color: rgba(30, 41, 59, 0.78);
+    color: #ffffff;
+  }
+
+  .terit-btn-danger {
+    background-color: rgba(254, 242, 242, 0.85);
+    color: #dc2626;
+    border: 1px solid rgba(220, 38, 38, 0.20);
+  }
+
+  .dark .terit-btn-danger {
+    border: none;
+  }
+
+  .terit-btn-danger:hover {
+    background-color: rgba(254, 226, 226, 0.95);
+  }
+
+  .terit-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 9999px;
+    padding: 0.125rem 0.5rem;
+    font-size: 0.65rem;
+    font-weight: 700;
+    border: 1px solid transparent;
+  }
+
+  .terit-badge-success {
+    background-color: rgba(236, 253, 245, 0.85);
+    color: #065f46;
+    border-color: rgba(167, 243, 208, 0.6);
+  }
+
+  .dark .terit-badge-success {
+    background-color: rgb(2 44 34 / 65%);
+    color: #34d399;
+    border: none;
+  }
+
+  .terit-badge-warning {
+    background-color: rgba(255, 251, 235, 0.85);
+    color: #92400e;
+    border-color: rgba(253, 230, 138, 0.6);
+  }
+
+  .dark .terit-badge-warning {
+    background-color: rgb(120 53 15 / 65%);
+    color: #fbbf24;
+    border: none;
+  }
+
+  .terit-badge-danger {
+    background-color: rgba(254, 242, 242, 0.85);
+    color: #b91c1c;
+    border-color: rgba(254, 202, 202, 0.6);
+  }
+
+  .dark .terit-badge-danger {
+    background-color: rgb(159 18 57 / 65%);
+    color: #fb7185;
+    border: none;
+  }
+
+  .terit-skeleton {
+    background: linear-gradient(90deg, rgba(148, 163, 184, 0.22) 25%, rgba(148, 163, 184, 0.34) 50%, rgba(148, 163, 184, 0.22) 75%);
+    background-size: 200% 100%;
+    animation: terit-shimmer 1.6s infinite linear;
+  }
+}
+
+@keyframes terit-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.dark .border-slate-800 {
+  border-color: transparent;
+}
+
+.dark .border-slate-700 {
+  border-color: transparent;
+}

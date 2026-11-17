@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "et.terit.stockapp",
+      "sha256_cert_fingerprints": [
+        "14:6D:E9:7A:B5:72:42:54:7A:7E:6D:E0:43:92:20:50:5F:5F:73:94:0E:9E:01:77:88:94:83:84:89:94:21:20"
+      ]
+    }
+  }
+]

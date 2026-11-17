@@ -1,0 +1,6 @@
+{
+  "name": "Terit Stock & Inventory Manager",
+  "description": "Modern free & premium stock management platform with real-time tracking, multi-warehouse routing, automated purchase orders, and AI market intelligence.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,226 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile with plan tier and company settings",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 256 },
+        "displayName": { "type": "string", "maxLength": 128 },
+        "photoURL": { "type": "string", "maxLength": 512 },
+        "tier": { "type": "string", "enum": ["free", "starter", "pro", "enterprise", "shop", "warehouse", "pharmacy"] },
+        "planTier": { "type": "string", "enum": ["free", "starter", "pro", "enterprise", "shop", "warehouse", "pharmacy"] },
+        "businessType": { "type": "string", "enum": ["shop", "store", "minimarket", "supermarket", "pharmacy", "hardware", "building", "other"] },
+        "language": { "type": "string", "enum": ["en", "am", "om", "ti", "so"] },
+        "theme": { "type": "string", "enum": ["light", "dark"] },
+        "companyName": { "type": "string", "maxLength": 128 },
+        "companyProfile": { "type": "object" },
+        "currency": { "type": "string", "maxLength": 10 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId"]
+    },
+    "InventoryItem": {
+      "title": "InventoryItem",
+      "description": "Stock inventory item with tracking metrics and pricing",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 200 },
+        "sku": { "type": "string", "maxLength": 64 },
+        "barcode": { "type": "string", "maxLength": 64 },
+        "category": { "type": "string", "maxLength": 100 },
+        "description": { "type": "string", "maxLength": 1000 },
+        "quantity": { "type": "number" },
+        "minStockAlert": { "type": "number" },
+        "unitPrice": { "type": "number" },
+        "costPrice": { "type": "number" },
+        "unitOfMeasure": { "type": "string", "maxLength": 32 },
+        "location": { "type": "string", "maxLength": 128 },
+        "locationId": { "type": "string", "maxLength": 128 },
+        "supplierId": { "type": "string", "maxLength": 128 },
+        "supplierName": { "type": "string", "maxLength": 128 },
+        "status": { "type": "string", "enum": ["in_stock", "low_stock", "out_of_stock"] },
+        "batchNumber": { "type": "string", "maxLength": 64 },
+        "expiryDate": { "type": "string", "maxLength": 32 },
+        "color": { "type": "string", "maxLength": 64 },
+        "size": { "type": "string", "maxLength": 64 },
+        "specs": { "type": "string", "maxLength": 128 },
+        "isBundle": { "type": "boolean" },
+        "bundleComponents": { "type": "array" },
+        "costingMethod": { "type": "string", "enum": ["fifo", "lifo", "wac"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "name", "sku", "quantity", "unitPrice"]
+    },
+    "Location": {
+      "title": "Location",
+      "description": "Stock storage location such as warehouse, store, bin, or vehicle",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 128 },
+        "code": { "type": "string", "maxLength": 32 },
+        "type": { "type": "string", "enum": ["warehouse", "bin", "store", "vehicle"] },
+        "address": { "type": "string", "maxLength": 256 },
+        "capacity": { "type": "number" },
+        "isDefault": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "name", "code"]
+    },
+    "StockLedgerEntry": {
+      "title": "StockLedgerEntry",
+      "description": "Immutable stock movement and audit ledger entry",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "itemId": { "type": "string", "maxLength": 128 },
+        "itemName": { "type": "string", "maxLength": 200 },
+        "sku": { "type": "string", "maxLength": 64 },
+        "type": { "type": "string", "enum": ["purchase", "sale", "transfer", "adjustment", "assembly", "disassembly", "inbound", "outbound", "initial"] },
+        "quantity": { "type": "number" },
+        "previousQuantity": { "type": "number" },
+        "newQuantity": { "type": "number" },
+        "sourceLocationId": { "type": "string", "maxLength": 128 },
+        "sourceLocationName": { "type": "string", "maxLength": 128 },
+        "destinationLocationId": { "type": "string", "maxLength": 128 },
+        "destinationLocationName": { "type": "string", "maxLength": 128 },
+        "location": { "type": "string", "maxLength": 128 },
+        "referenceNumber": { "type": "string", "maxLength": 64 },
+        "unitCost": { "type": "number" },
+        "totalCost": { "type": "number" },
+        "referenceType": { "type": "string", "enum": ["purchase_order", "sale", "stock_adjustment", "transfer", "bundle_assembly", "bundle_disassembly", "initial"] },
+        "referenceId": { "type": "string", "maxLength": 128 },
+        "reason": { "type": "string", "maxLength": 500 },
+        "syncStatus": { "type": "string", "enum": ["synced", "pending", "conflict"] },
+        "localId": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "itemId", "type", "quantity"]
+    },
+    "StockTransaction": {
+      "title": "StockTransaction",
+      "description": "Legacy audit trail log of inventory movements and stock adjustments",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "itemId": { "type": "string", "maxLength": 128 },
+        "itemName": { "type": "string", "maxLength": 200 },
+        "type": { "type": "string", "enum": ["inbound", "outbound", "adjustment", "transfer"] },
+        "quantity": { "type": "number" },
+        "previousQuantity": { "type": "number" },
+        "newQuantity": { "type": "number" },
+        "reason": { "type": "string", "maxLength": 500 },
+        "referenceNumber": { "type": "string", "maxLength": 64 },
+        "location": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "itemId", "type", "quantity"]
+    },
+    "Supplier": {
+      "title": "Supplier",
+      "description": "Vendor and supplier information for restocking",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 128 },
+        "contactName": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 256 },
+        "phone": { "type": "string", "maxLength": 64 },
+        "address": { "type": "string", "maxLength": 256 },
+        "leadTimeDays": { "type": "number" },
+        "notes": { "type": "string", "maxLength": 500 },
+        "rating": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "name"]
+    },
+    "PurchaseOrder": {
+      "title": "PurchaseOrder",
+      "description": "Procurement purchase order for inventory restocking",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "poNumber": { "type": "string", "maxLength": 64 },
+        "supplierId": { "type": "string", "maxLength": 128 },
+        "supplierName": { "type": "string", "maxLength": 128 },
+        "items": { "type": "array" },
+        "totalAmount": { "type": "number" },
+        "totalLandedCost": { "type": "number" },
+        "grandTotal": { "type": "number" },
+        "status": { "type": "string", "enum": ["draft", "ordered", "received", "cancelled"] },
+        "orderDate": { "type": "string", "maxLength": 32 },
+        "expectedDate": { "type": "string", "maxLength": 32 },
+        "receivedDate": { "type": "string", "maxLength": 32 },
+        "notes": { "type": "string", "maxLength": 500 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "poNumber", "supplierName", "status", "totalAmount"]
+    },
+    "Warehouse": {
+      "title": "Warehouse",
+      "description": "Physical or virtual warehouse storage facility",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 128 },
+        "code": { "type": "string", "maxLength": 32 },
+        "type": { "type": "string", "enum": ["warehouse", "bin", "store", "vehicle"] },
+        "address": { "type": "string", "maxLength": 256 },
+        "capacity": { "type": "number" },
+        "isDefault": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "name", "code"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "UserProfile" },
+      "description": "User profile with plan tier and company preferences"
+    },
+    "/inventory_items/{itemId}": {
+      "schema": { "$ref": "InventoryItem" },
+      "description": "Stock items owned by authenticated users"
+    },
+    "/locations/{locationId}": {
+      "schema": { "$ref": "Location" },
+      "description": "Warehouse, store, bin, and vehicle stock locations"
+    },
+    "/stock_ledger/{entryId}": {
+      "schema": { "$ref": "StockLedgerEntry" },
+      "description": "Immutable stock ledger entries owned by authenticated users"
+    },
+    "/stock_transactions/{transactionId}": {
+      "schema": { "$ref": "StockTransaction" },
+      "description": "Legacy audit trail entries of stock movements"
+    },
+    "/suppliers/{supplierId}": {
+      "schema": { "$ref": "Supplier" },
+      "description": "Vendor directory managed by user"
+    },
+    "/purchase_orders/{poId}": {
+      "schema": { "$ref": "PurchaseOrder" },
+      "description": "Purchase orders for replenishment"
+    },
+    "/warehouses/{warehouseId}": {
+      "schema": { "$ref": "Warehouse" },
+      "description": "Warehouse storage locations"
+    }
+  }
+}

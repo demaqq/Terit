@@ -1,0 +1,349 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global safety net: default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function optString(data, field, maxLen) {
+      return !(field in data) || (data[field] is string && data[field].size() <= maxLen);
+    }
+
+    function optNumber(data, field) {
+      return !(field in data) || (data[field] is number);
+    }
+
+    function optBool(data, field) {
+      return !(field in data) || (data[field] is bool);
+    }
+
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['userId'])
+        && data.keys().hasOnly([
+          'userId', 'email', 'displayName', 'photoURL', 'tier', 'planTier',
+          'businessType', 'language', 'theme', 'companyName', 'companyProfile',
+          'currency', 'createdAt', 'updatedAt'
+        ])
+        && data.userId is string
+        && data.userId == request.auth.uid
+        && data.userId.size() <= 128
+        && optString(data, 'email', 256)
+        && optString(data, 'displayName', 128)
+        && optString(data, 'photoURL', 512)
+        && optString(data, 'companyName', 128)
+        && optString(data, 'currency', 10)
+        && optString(data, 'createdAt', 64)
+        && optString(data, 'updatedAt', 64)
+        && (!('tier' in data) || data.tier in ['free', 'starter', 'pro', 'enterprise', 'shop', 'warehouse', 'pharmacy'])
+        && (!('planTier' in data) || data.planTier in ['free', 'starter', 'pro', 'enterprise', 'shop', 'warehouse', 'pharmacy'])
+        && (!('businessType' in data) || data.businessType in ['shop', 'store', 'minimarket', 'supermarket', 'pharmacy', 'hardware', 'building', 'other'])
+        && (!('language' in data) || data.language in ['en', 'am', 'om', 'ti', 'so'])
+        && (!('theme' in data) || data.theme in ['light', 'dark'])
+        && (!('companyProfile' in data) || data.companyProfile is map);
+    }
+
+    function isValidInventoryItem(data) {
+      return data.keys().hasAll(['id', 'userId', 'name', 'sku', 'quantity', 'unitPrice'])
+        && data.keys().hasOnly([
+          'id', 'userId', 'name', 'sku', 'barcode', 'category', 'description',
+          'quantity', 'minStockAlert', 'unitPrice', 'costPrice', 'unitOfMeasure',
+          'location', 'locationId', 'supplierId', 'supplierName', 'status',
+          'batchNumber', 'expiryDate', 'color', 'size', 'specs',
+          'isBundle', 'bundleComponents', 'costingMethod', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.id)
+        && data.userId is string
+        && data.userId == request.auth.uid
+        && data.userId.size() <= 128
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 200
+        && data.sku is string && data.sku.size() <= 64
+        && data.quantity is number
+        && data.unitPrice is number
+        && optString(data, 'barcode', 64)
+        && optString(data, 'category', 100)
+        && optString(data, 'description', 1000)
+        && optNumber(data, 'minStockAlert')
+        && optNumber(data, 'costPrice')
+        && optString(data, 'unitOfMeasure', 32)
+        && optString(data, 'location', 128)
+        && optString(data, 'locationId', 128)
+        && optString(data, 'supplierId', 128)
+        && optString(data, 'supplierName', 128)
+        && (!('status' in data) || data.status in ['in_stock', 'low_stock', 'out_of_stock'])
+        && optString(data, 'batchNumber', 64)
+        && optString(data, 'expiryDate', 32)
+        && optString(data, 'color', 64)
+        && optString(data, 'size', 64)
+        && optString(data, 'specs', 128)
+        && optBool(data, 'isBundle')
+        && (!('bundleComponents' in data) || (
+          data.bundleComponents is list &&
+          data.bundleComponents.size() <= 50 &&
+          (data.bundleComponents.size() == 0 || data.bundleComponents[0] is map)
+        ))
+        && (!('costingMethod' in data) || data.costingMethod in ['fifo', 'lifo', 'wac'])
+        && optString(data, 'createdAt', 64)
+        && optString(data, 'updatedAt', 64);
+    }
+
+    function isValidLocation(data) {
+      return data.keys().hasAll(['id', 'userId', 'name', 'code'])
+        && data.keys().hasOnly([
+          'id', 'userId', 'name', 'code', 'type', 'address', 'capacity', 'isDefault', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.id)
+        && data.userId is string
+        && data.userId == request.auth.uid
+        && data.userId.size() <= 128
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 128
+        && data.code is string && data.code.size() > 0 && data.code.size() <= 32
+        && (!('type' in data) || data.type in ['warehouse', 'bin', 'store', 'vehicle'])
+        && optString(data, 'address', 256)
+        && optNumber(data, 'capacity')
+        && optBool(data, 'isDefault')
+        && optString(data, 'createdAt', 64)
+        && optString(data, 'updatedAt', 64);
+    }
+
+    function isValidStockLedgerEntry(data) {
+      return data.keys().hasAll(['id', 'userId', 'itemId', 'type', 'quantity'])
+        && data.keys().hasOnly([
+          'id', 'userId', 'itemId', 'itemName', 'sku', 'type', 'quantity',
+          'previousQuantity', 'newQuantity', 'sourceLocationId', 'sourceLocationName',
+          'destinationLocationId', 'destinationLocationName', 'location',
+          'referenceNumber', 'unitCost', 'totalCost', 'referenceType',
+          'referenceId', 'reason', 'syncStatus', 'localId', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.id)
+        && data.userId is string
+        && data.userId == request.auth.uid
+        && data.userId.size() <= 128
+        && isValidId(data.itemId)
+        && optString(data, 'itemName', 200)
+        && optString(data, 'sku', 64)
+        && data.type in ['purchase', 'sale', 'transfer', 'adjustment', 'assembly', 'disassembly', 'inbound', 'outbound', 'initial']
+        && data.quantity is number
+        && optNumber(data, 'previousQuantity')
+        && optNumber(data, 'newQuantity')
+        && optString(data, 'sourceLocationId', 128)
+        && optString(data, 'sourceLocationName', 128)
+        && optString(data, 'destinationLocationId', 128)
+        && optString(data, 'destinationLocationName', 128)
+        && optString(data, 'location', 128)
+        && optString(data, 'referenceNumber', 64)
+        && optNumber(data, 'unitCost')
+        && optNumber(data, 'totalCost')
+        && (!('referenceType' in data) || data.referenceType in [
+          'purchase_order', 'sale', 'stock_adjustment', 'transfer', 'bundle_assembly', 'bundle_disassembly', 'initial'
+        ])
+        && optString(data, 'referenceId', 128)
+        && optString(data, 'reason', 500)
+        && (!('syncStatus' in data) || data.syncStatus in ['synced', 'pending', 'conflict'])
+        && optString(data, 'localId', 128)
+        && optString(data, 'createdAt', 64)
+        && optString(data, 'updatedAt', 64);
+    }
+
+    function isValidStockTransaction(data) {
+      return data.keys().hasAll(['userId', 'itemId', 'type', 'quantity'])
+        && data.keys().hasOnly([
+          'id', 'userId', 'itemId', 'itemName', 'sku', 'type', 'quantity',
+          'previousQuantity', 'newQuantity', 'reason', 'referenceNumber', 'location', 'createdAt'
+        ])
+        && optString(data, 'id', 128)
+        && data.userId is string
+        && data.userId == request.auth.uid
+        && data.userId.size() <= 128
+        && isValidId(data.itemId)
+        && optString(data, 'itemName', 200)
+        && optString(data, 'sku', 64)
+        && data.type in ['inbound', 'outbound', 'adjustment', 'transfer']
+        && data.quantity is number
+        && optNumber(data, 'previousQuantity')
+        && optNumber(data, 'newQuantity')
+        && optString(data, 'reason', 500)
+        && optString(data, 'referenceNumber', 64)
+        && optString(data, 'location', 128)
+        && optString(data, 'createdAt', 64);
+    }
+
+    function isValidSupplier(data) {
+      return data.keys().hasAll(['id', 'userId', 'name'])
+        && data.keys().hasOnly([
+          'id', 'userId', 'name', 'contactName', 'email', 'phone', 'address',
+          'leadTimeDays', 'notes', 'rating', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.id)
+        && data.userId is string
+        && data.userId == request.auth.uid
+        && data.userId.size() <= 128
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 128
+        && optString(data, 'contactName', 128)
+        && optString(data, 'email', 256)
+        && optString(data, 'phone', 64)
+        && optString(data, 'address', 256)
+        && optNumber(data, 'leadTimeDays')
+        && optString(data, 'notes', 500)
+        && optNumber(data, 'rating')
+        && optString(data, 'createdAt', 64)
+        && optString(data, 'updatedAt', 64);
+    }
+
+    function isValidPurchaseOrder(data) {
+      return data.keys().hasAll(['id', 'userId', 'poNumber', 'supplierName', 'status', 'totalAmount'])
+        && data.keys().hasOnly([
+          'id', 'userId', 'poNumber', 'supplierId', 'supplierName', 'items',
+          'totalAmount', 'totalLandedCost', 'grandTotal', 'status', 'orderDate',
+          'expectedDate', 'receivedDate', 'notes', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.id)
+        && data.userId is string
+        && data.userId == request.auth.uid
+        && data.userId.size() <= 128
+        && data.poNumber is string && data.poNumber.size() > 0 && data.poNumber.size() <= 64
+        && optString(data, 'supplierId', 128)
+        && data.supplierName is string && data.supplierName.size() <= 128
+        && (!('items' in data) || (
+          data.items is list &&
+          data.items.size() <= 200 &&
+          (data.items.size() == 0 || data.items[0] is map)
+        ))
+        && data.totalAmount is number
+        && optNumber(data, 'totalLandedCost')
+        && optNumber(data, 'grandTotal')
+        && data.status in ['draft', 'ordered', 'received', 'cancelled']
+        && optString(data, 'orderDate', 32)
+        && optString(data, 'expectedDate', 32)
+        && optString(data, 'receivedDate', 32)
+        && optString(data, 'notes', 500)
+        && optString(data, 'createdAt', 64)
+        && optString(data, 'updatedAt', 64);
+    }
+
+    function isValidWarehouse(data) {
+      return isValidLocation(data);
+    }
+
+    // Connection testing doc
+    match /test/{testId} {
+      allow get: if isValidId(testId);
+      allow list, write: if false;
+    }
+
+    // User profile (PII protected: owner-only get)
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && isVerifiedUser() && isValidId(userId) && isValidUserProfile(incoming());
+      allow update: if isOwner(userId) && isVerifiedUser() && isValidId(userId) && isValidUserProfile(incoming())
+        && (!('userId' in existing()) || incoming().userId == existing().userId);
+      allow delete: if false;
+    }
+
+    // Inventory Items
+    match /inventory_items/{itemId} {
+      allow get: if isSignedIn() && isValidId(itemId) && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isVerifiedUser() && isValidId(itemId) && isValidInventoryItem(incoming());
+      allow update: if isVerifiedUser() && isValidId(itemId) && isValidInventoryItem(incoming())
+        && existing().userId == request.auth.uid
+        && incoming().userId == existing().userId
+        && (!('createdAt' in existing()) || incoming().createdAt == existing().createdAt);
+      allow delete: if isVerifiedUser() && isValidId(itemId) && existing().userId == request.auth.uid;
+    }
+
+    // Stock Locations
+    match /locations/{locationId} {
+      allow get: if isSignedIn() && isValidId(locationId) && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isVerifiedUser() && isValidId(locationId) && isValidLocation(incoming());
+      allow update: if isVerifiedUser() && isValidId(locationId) && isValidLocation(incoming())
+        && existing().userId == request.auth.uid
+        && incoming().userId == existing().userId
+        && (!('createdAt' in existing()) || incoming().createdAt == existing().createdAt);
+      allow delete: if isVerifiedUser() && isValidId(locationId) && existing().userId == request.auth.uid;
+    }
+
+    // Immutable Stock Ledger
+    match /stock_ledger/{entryId} {
+      allow get: if isSignedIn() && isValidId(entryId) && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isVerifiedUser() && isValidId(entryId) && isValidStockLedgerEntry(incoming());
+      allow update: if false;
+      allow delete: if isVerifiedUser() && isValidId(entryId) && existing().userId == request.auth.uid;
+    }
+
+    // Legacy Stock Transactions Audit Trail
+    match /stock_transactions/{transactionId} {
+      allow get: if isSignedIn() && isValidId(transactionId) && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isVerifiedUser() && isValidId(transactionId) && isValidStockTransaction(incoming());
+      allow update: if false;
+      allow delete: if isVerifiedUser() && isValidId(transactionId) && existing().userId == request.auth.uid;
+    }
+
+    // Suppliers
+    match /suppliers/{supplierId} {
+      allow get: if isSignedIn() && isValidId(supplierId) && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isVerifiedUser() && isValidId(supplierId) && isValidSupplier(incoming());
+      allow update: if isVerifiedUser() && isValidId(supplierId) && isValidSupplier(incoming())
+        && existing().userId == request.auth.uid
+        && incoming().userId == existing().userId
+        && (!('createdAt' in existing()) || incoming().createdAt == existing().createdAt);
+      allow delete: if isVerifiedUser() && isValidId(supplierId) && existing().userId == request.auth.uid;
+    }
+
+    // Purchase Orders (Terminal state locked once received or cancelled)
+    match /purchase_orders/{poId} {
+      allow get: if isSignedIn() && isValidId(poId) && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isVerifiedUser() && isValidId(poId) && isValidPurchaseOrder(incoming());
+      allow update: if isVerifiedUser() && isValidId(poId) && isValidPurchaseOrder(incoming())
+        && existing().userId == request.auth.uid
+        && incoming().userId == existing().userId
+        && existing().status != 'received'
+        && existing().status != 'cancelled'
+        && (!('createdAt' in existing()) || incoming().createdAt == existing().createdAt);
+      allow delete: if isVerifiedUser() && isValidId(poId) && existing().userId == request.auth.uid;
+    }
+
+    // Warehouses
+    match /warehouses/{warehouseId} {
+      allow get: if isSignedIn() && isValidId(warehouseId) && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isVerifiedUser() && isValidId(warehouseId) && isValidWarehouse(incoming());
+      allow update: if isVerifiedUser() && isValidId(warehouseId) && isValidWarehouse(incoming())
+        && existing().userId == request.auth.uid
+        && incoming().userId == existing().userId
+        && (!('createdAt' in existing()) || incoming().createdAt == existing().createdAt);
+      allow delete: if isVerifiedUser() && isValidId(warehouseId) && existing().userId == request.auth.uid;
+    }
+  }
+}
