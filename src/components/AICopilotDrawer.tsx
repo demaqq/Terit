@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { buildCopilotSystemPrompt } from '../../server/prompts';
+import { getClaudeSample } from '../lib/claudeBridge';
 import {
   X,
   Send,
@@ -276,6 +278,40 @@ Ask me in **English**, **አማርኛ**, **Afaan Oromoo**, **ትግርኛ**, or 
       }));
 
     try {
+      // Inside a Claude artifact there is no Express/Gemini backend: ask Claude
+      // through the artifact's `sample` capability instead.
+      const claudeSample = await getClaudeSample();
+      if (claudeSample) {
+        const turns = (apiMessages.length > 0 ? apiMessages : [{ role: 'user', content: textToSend }]).map((m) => ({
+          role: (m.role === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
+          content: m.content,
+        }));
+        while (turns.length && turns[0].role !== 'user') turns.shift();
+        const rules = buildCopilotSystemPrompt({ language, businessType, inventoryContext });
+        const replyId = 'reply-' + Date.now();
+        const ts = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        let started = false;
+        const { text } = await claudeSample([{ role: 'user', content: rules }, ...turns], {
+          cache: false,
+          modelTier: modelMode === 'fast' ? 'quick' : modelMode === 'complex' ? 'complex' : 'default',
+          onText: ({ text: partial }: { text: string }) => {
+            setMessages((prev) => {
+              if (!started) {
+                started = true;
+                return [...prev, { id: replyId, role: 'model', content: partial, timestamp: ts }];
+              }
+              return prev.map((m) => (m.id === replyId ? { ...m, content: partial } : m));
+            });
+          },
+        });
+        setMessages((prev) =>
+          started
+            ? prev.map((m) => (m.id === replyId ? { ...m, content: text } : m))
+            : [...prev, { id: replyId, role: 'model', content: text, timestamp: ts }]
+        );
+        return;
+      }
+
       const res = await fetch('/api/gemini/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -304,10 +340,16 @@ Ask me in **English**, **አማርኛ**, **Afaan Oromoo**, **ትግርኛ**, or 
       setMessages((prev) => [...prev, botReply]);
     } catch (err: any) {
       console.error('Chat error:', err);
+      const claudeHint: Record<string, string> = {
+        not_granted: 'Claude access was not allowed for this page.',
+        rate_limited: 'Too many requests right now. Try again in a minute.',
+        sampling_disabled: 'Claude is not available for this account.',
+      };
+      const detail = (err?.code && claudeHint[err.code]) || err?.message;
       const errorReply: ChatMessage = {
         id: 'err-' + Date.now(),
         role: 'model',
-        content: err?.message ? `${t('copilot_error_fallback')} (${err.message})` : t('copilot_error_fallback'),
+        content: detail ? `${t('copilot_error_fallback')} (${detail})` : t('copilot_error_fallback'),
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages((prev) => [...prev, errorReply]);
