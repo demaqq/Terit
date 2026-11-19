@@ -56,6 +56,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
     businessType,
     tier,
     t,
+    profile,
   } = useInventory();
 
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
@@ -154,7 +155,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
 
             {/* Navigation Links Grid: every screen not in the bottom bar */}
             <div className="grid grid-cols-2 gap-2 text-xs">
-              {MORE_MENU_ITEMS.map(({ id, labelKey, Icon, iconClass }) => (
+              {MORE_MENU_ITEMS.filter((m) => !profile.hiddenScreens.includes(m.id)).map(({ id, labelKey, Icon, iconClass }) => (
                 <button
                   key={id}
                   onClick={() => handleTabClick(id)}

@@ -59,6 +59,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     businessType,
     companyProfile,
     t,
+    profile,
   } = useInventory();
 
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
@@ -106,7 +107,10 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const tierLabel = (tier || 'free').toUpperCase();
   const isPro = tier === 'pro';
-  const activeSecondary = SECONDARY_NAV.find((n) => n.id === activeTab);
+  // Only the screens that suit this business model.
+  const primaryNav = PRIMARY_NAV.filter((n) => !profile.hiddenScreens.includes(n.id));
+  const secondaryNav = SECONDARY_NAV.filter((n) => !profile.hiddenScreens.includes(n.id));
+  const activeSecondary = secondaryNav.find((n) => n.id === activeTab);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const moreMenuRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -357,7 +361,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Pinned Scrollable Nav Tabs (full width below top row) */}
         <div className="hidden lg:block border-t border-slate-900/8 dark:border-white/10">
           <nav aria-label={t('nav_main_navigation')} className="flex items-center gap-1 py-1.5 flex-wrap">
-            {PRIMARY_NAV.map((tab) => {
+            {primaryNav.map((tab) => {
               const isActive = activeTab === tab.id;
               const Icon = tab.Icon;
               return (
@@ -400,7 +404,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   role="menu"
                   className="absolute left-0 top-full mt-1.5 w-56 p-1.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-xl z-50"
                 >
-                  {SECONDARY_NAV.map((item) => {
+                  {secondaryNav.map((item) => {
                     const isActive = activeTab === item.id;
                     return (
                       <button

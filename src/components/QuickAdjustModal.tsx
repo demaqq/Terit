@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, ArrowDownLeft, ArrowUpRight, RefreshCw, AlertCircle } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
 import { useToast } from '../components/Toast';
+import { allowsFraction, daysUntilExpiry, expiryState } from '../data/businessProfiles';
 
 interface QuickAdjustModalProps {
   isOpen: boolean;
@@ -18,12 +19,14 @@ const REASON_KEY_MAP: Record<string, string> = {
   'Internal Assembly Consumption': 'reason_assembly_consumption',
 };
 
+const WRITE_OFF_REASON = 'Damaged / Scrap / Waste';
+
 export const QuickAdjustModal: React.FC<QuickAdjustModalProps> = ({
   isOpen,
   onClose,
   targetItemId,
 }) => {
-  const { items, quickAdjustStock, businessType, t } = useInventory();
+  const { items, quickAdjustStock, businessType, profile, t } = useInventory();
   const { toast } = useToast();
   const [selectedItemId, setSelectedItemId] = useState(targetItemId || items[0]?.id || '');
   const [adjustType, setAdjustType] = useState<'in' | 'out' | 'set'>('in');
@@ -44,6 +47,10 @@ export const QuickAdjustModal: React.FC<QuickAdjustModalProps> = ({
 
   const currentItem = items.find((i) => i.id === selectedItemId);
   const currentQty = currentItem?.quantity ?? 0;
+  const itemExpiry = currentItem ? expiryState(currentItem, profile) : 'none';
+  const isExpired = itemExpiry === 'expired';
+  const expiryDays = currentItem ? daysUntilExpiry(currentItem) : null;
+  const fractional = allowsFraction(currentItem?.unitOfMeasure, profile);
 
   const calculatedNewQty =
     adjustType === 'in'
@@ -65,6 +72,12 @@ export const QuickAdjustModal: React.FC<QuickAdjustModalProps> = ({
 
     if (businessType === 'pharmacy' && adjustType === 'out' && currentItem.isQuarantined) {
       toast(t('pharmacy_quarantined_blocked') || 'This batch is quarantined — dispensing blocked.', 'error');
+      return;
+    }
+
+    // Expired stock can leave the shelf only as a write-off, never as a sale or issue.
+    if (adjustType === 'out' && isExpired && profile.expiry.blockExpiredIssue && reason !== WRITE_OFF_REASON) {
+      toast(t('expired_issue_blocked'), 'error');
       return;
     }
 
@@ -119,16 +132,24 @@ export const QuickAdjustModal: React.FC<QuickAdjustModalProps> = ({
           )}
 
           {/* Pharmacy FEFO / Quarantine guardrail (tailored business model) */}
-          {businessType === 'pharmacy' && currentItem && (currentItem.isQuarantined || currentItem.expiryDate) && (
-            <div className={`p-3 rounded-xl border text-xs flex items-start gap-2 ${
-              currentItem.isQuarantined
-                ? 'bg-rose-500/10 border-rose-500/30 text-rose-700 dark:text-rose-300'
-                : 'bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300'
+          {currentItem && (currentItem.isQuarantined || (itemExpiry !== 'none' && currentItem.expiryDate)) && (
+            <div role="status" className={`p-3 rounded-xl border text-xs flex items-start gap-2 ${
+              currentItem.isQuarantined || isExpired
+                ? 'bg-rose-500/10 border-rose-500/30 text-rose-800 dark:text-rose-300'
+                : itemExpiry === 'soon'
+                  ? 'bg-amber-500/10 border-amber-500/30 text-amber-800 dark:text-amber-300'
+                  : 'bg-slate-500/5 border-slate-500/20 text-slate-700 dark:text-slate-300'
             }`}>
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <div>
                 {currentItem.isQuarantined && (
                   <div className="font-bold">{t('pharmacy_quarantined_batch') || 'Quarantined batch — dispensing blocked.'}</div>
+                )}
+                {isExpired && profile.expiry.blockExpiredIssue && (
+                  <div className="font-bold">{t('expired_write_off_only')}</div>
+                )}
+                {itemExpiry === 'soon' && expiryDays !== null && (
+                  <div className="font-bold">{t('expires_in_days').replace('{days}', String(expiryDays))}</div>
                 )}
                 {currentItem.expiryDate && (
                   <div>
@@ -198,10 +219,15 @@ export const QuickAdjustModal: React.FC<QuickAdjustModalProps> = ({
             </label>
             <input
               type="number"
-              min={adjustType === 'set' ? '0' : '1'}
+              min={adjustType === 'set' ? '0' : fractional ? '0.01' : '1'}
+              step={fractional ? 'any' : '1'}
               required
               value={amount}
-              onChange={(e) => setAmount(Math.max(adjustType === 'set' ? 0 : 1, parseInt(e.target.value, 10) || 0))}
+              onChange={(e) => {
+                const raw = fractional ? parseFloat(e.target.value) : parseInt(e.target.value, 10);
+                const floor = adjustType === 'set' ? 0 : fractional ? 0.01 : 1;
+                setAmount(Math.max(floor, Number.isFinite(raw) ? raw : 0));
+              }}
               className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 font-mono text-slate-900 dark:text-white text-base focus:outline-none focus:border-amber-500"
             />
           </div>

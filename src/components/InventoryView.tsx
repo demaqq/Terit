@@ -86,7 +86,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
   onViewItemDetails,
   onOpenPricing,
 }) => {
-  const { items, deleteItem, tier, importItems, warehouses, businessType, t } = useInventory();
+  const { items, deleteItem, tier, importItems, warehouses, businessType, profile, t } = useInventory();
   const { toast } = useToast();
   const [showFilters, setShowFilters] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -697,7 +697,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
             )}
 
             {/* Pharmacy, Supermarket, Minimarket: Expiry/Freshness Window + Form/Pack Unit */}
-            {(businessType === 'pharmacy' || businessType === 'supermarket' || businessType === 'minimarket') && (
+            {profile.expiry.tracked && (
               <>
                 <select
                   aria-label={t(`filter_expiry_label_${businessType}`)}

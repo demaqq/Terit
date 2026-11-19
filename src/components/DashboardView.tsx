@@ -15,6 +15,7 @@ import {
 import { useInventory } from '../context/InventoryContext';
 import { ledgerDirection, newestFirst } from '../lib/ledger';
 import { IndustryToolsPanel } from './IndustryToolsPanel';
+import { BusinessInsightCard } from './BusinessInsightCard';
 import { InventoryItem } from '../types/inventory';
 
 interface DashboardViewProps {
@@ -230,6 +231,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       </div>
 
       {/* Customized Industry Operations & Custom Toolset */}
+      <BusinessInsightCard onNavigate={onNavigate} />
+
       <IndustryToolsPanel
         onOpenCreatePO={onOpenCreatePO}
         onOpenQuickAdjust={onOpenQuickAdjust}

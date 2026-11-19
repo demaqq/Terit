@@ -3,6 +3,7 @@ import { X, RefreshCw, Barcode, Calendar, Sparkles, Sliders, Tag } from 'lucide-
 import { useInventory } from '../context/InventoryContext';
 import { InventoryItem } from '../types/inventory';
 import { BUSINESS_TYPES } from '../i18n/translations';
+import { allowsFraction } from '../data/businessProfiles';
 import { BUSINESS_NICHE_CONFIG } from '../data/businessPresets';
 import { useToast } from '../components/Toast';
 
@@ -17,7 +18,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
   onClose,
   editingItem,
 }) => {
-  const { addItem, updateItem, suppliers, warehouses, businessType, t } = useInventory();
+  const { addItem, updateItem, quickAdjustStock, suppliers, warehouses, businessType, profile, t } = useInventory();
   const currentBiz = BUSINESS_TYPES.find((b) => b.id === businessType) || BUSINESS_TYPES[0];
   const nicheConfig = BUSINESS_NICHE_CONFIG[businessType] || BUSINESS_NICHE_CONFIG.shop;
   const { toast } = useToast();
@@ -165,6 +166,14 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
       toast(t('add_item_error_numbers') || 'Enter valid non-negative numbers for quantity, min stock, and prices.', 'error');
       return;
     }
+    if (!allowsFraction(unitOfMeasure, profile) && (!Number.isInteger(q) || !Number.isInteger(min))) {
+      toast(t('add_item_error_whole_units'), 'error');
+      return;
+    }
+    if (profile.expiry.required && !expiryDate) {
+      toast(t('add_item_error_expiry_required'), 'error');
+      return;
+    }
 
     const selectedSup = suppliers.find((s) => s.id === supplierId);
 
@@ -175,7 +184,6 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
         barcode: barcode || String(Math.floor(100000000000 + Math.random() * 900000000000)),
         category,
         description,
-        quantity: q,
         minStockAlert: min,
         unitPrice: up,
         costPrice: cp,
@@ -189,6 +197,12 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
         size: size.trim() || undefined,
         specs: specs.trim() || undefined,
       });
+      // Quantity is owned by the stock ledger: record a change as an adjustment so it
+      // shows in the audit trail and is not overwritten by the ledger total.
+      const qtyDelta = Math.round((q - editingItem.quantity) * 1000) / 1000;
+      if (qtyDelta !== 0) {
+        await quickAdjustStock(editingItem.id, qtyDelta, t('reason_item_form_edit'));
+      }
     } else {
       await addItem({
         name,
@@ -525,6 +539,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                 type="number"
                 min="0"
                 required
+                step={allowsFraction(unitOfMeasure, profile) ? 'any' : '1'}
                 value={quantity}
                 onChange={(e) => setQuantity(Number(e.target.value))}
                 className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-amber-500 font-mono"
@@ -539,6 +554,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                 type="number"
                 min="0"
                 required
+                step={allowsFraction(unitOfMeasure, profile) ? 'any' : '1'}
                 value={minStockAlert}
                 onChange={(e) => setMinStockAlert(Number(e.target.value))}
                 className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-amber-500 font-mono"
@@ -618,7 +634,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
           </div>
 
           {/* Batch / Lot & Expiry Tracking (Pharmacy, Perishables & Cement Shelf-Life) */}
-          {nicheConfig.supportsBatchExpiry && (
+          {(nicheConfig.supportsBatchExpiry || profile.expiry.tracked) && (
             <div className="p-3.5 rounded-2xl bg-amber-50/50 dark:bg-slate-950/60 border border-amber-200/70 dark:border-slate-800 space-y-3">
               <div className="text-[11px] font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                 <Calendar className="w-3.5 h-3.5 text-amber-600 dark:text-amber-500" />
@@ -641,9 +657,11 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                 <div>
                   <label className="block text-[11px] font-medium text-slate-700 dark:text-slate-300 mb-1">
                     {nicheConfig.expiryFieldLabel}
+                    {profile.expiry.required && ' *'}
                   </label>
                   <input
                     type="date"
+                    required={profile.expiry.required}
                     value={expiryDate}
                     onChange={(e) => setExpiryDate(e.target.value)}
                     className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-amber-500"

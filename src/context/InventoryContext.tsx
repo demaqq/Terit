@@ -55,6 +55,7 @@ import {
 import { useToast } from '../components/Toast';
 import { offlineSync } from '../lib/offlineSync';
 import { isCompanyProfileComplete } from '../lib/validation';
+import { getBusinessProfile, expiryState, roundToPack, BusinessProfile } from '../data/businessProfiles';
 
 export const getPlanForBusinessType = (type: BusinessType): PlanTier => {
   switch (type) {
@@ -104,6 +105,8 @@ interface InventoryContextType {
   theme: 'light' | 'dark';
   setTheme: (theme: 'light' | 'dark') => void;
   businessType: BusinessType;
+  /** Operating rules for the current business model (see data/businessProfiles.ts). */
+  profile: BusinessProfile;
   setBusinessType: (type: BusinessType, loadPresets?: boolean, syncPlan?: boolean) => Promise<void>;
   hasCompletedOnboarding: boolean;
   setHasCompletedOnboarding: (completed: boolean) => void;
@@ -1583,6 +1586,18 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const bundleItem = items.find((i) => i.id === bundleItemId);
     if (!bundleItem || !bundleItem.isBundle || !bundleItem.bundleComponents) return false;
 
+    // Expired components cannot go into a kit for businesses that block issuing expired stock.
+    if (profile.expiry.blockExpiredIssue) {
+      const expiredComp = bundleItem.bundleComponents.find((c) => {
+        const comp = items.find((i) => i.id === c.itemId);
+        return comp && expiryState(comp, profile) === 'expired';
+      });
+      if (expiredComp) {
+        toast(`${t('expired_issue_blocked')} (${expiredComp.itemName})`, 'error');
+        return false;
+      }
+    }
+
     // Check component availability
     for (const comp of bundleItem.bundleComponents) {
       const compQty = comp.quantity * quantity;
@@ -1686,6 +1701,8 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   // --- Reorder recommendations (AI) ---
+  const profile = useMemo(() => getBusinessProfile(businessType), [businessType]);
+
   const getReorderRecommendations = useCallback((): ReorderRecommendation[] => {
     const recommendations: ReorderRecommendation[] = [];
     const defaultLoc = locations.find((l) => l.isDefault) || locations[0];
@@ -1696,8 +1713,10 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     for (const item of items) {
       if (item.isBundle) continue;
 
-      // item.quantity is kept equal to the ledger total across all locations.
-      const qtyOnHand = item.quantity;
+      // item.quantity is kept equal to the ledger total across all locations. For businesses
+      // that cannot sell expired stock, expired units do not count as available.
+      const expired = expiryState(item, profile) === 'expired';
+      const qtyOnHand = expired && profile.expiry.blockExpiredIssue ? 0 : item.quantity;
       const minAlert = Math.max(0, item.minStockAlert || 0);
 
       // Demand = stock leaving the business (sales/outbound/adjustments) in the window.
@@ -1715,20 +1734,23 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const avgDailyVelocity = totalSold / windowDays;
 
       const supplier = suppliers.find((s) => s.id === item.supplierId);
-      const leadTimeDays = supplier?.leadTimeDays || 7;
+      const leadTimeDays = supplier?.leadTimeDays || profile.reorder.defaultLeadTimeDays;
 
-      // Reorder point = lead-time demand + 10% safety stock, but never below the item's own
-      // minimum alert level, so low/out-of-stock items are flagged even with no sales history.
+      // Reorder point = lead-time demand + the business's safety buffer, but never below the
+      // item's own minimum level, so low/out-of-stock items are flagged even with no sales history.
       const leadTimeDemand = avgDailyVelocity * leadTimeDays;
-      const safetyStock = leadTimeDemand * 0.1;
+      const safetyStock = leadTimeDemand * profile.reorder.safetyFactor;
       const reorderPoint = Math.max(leadTimeDemand + safetyStock, minAlert);
 
       if (qtyOnHand > reorderPoint) continue;
       if (reorderPoint <= 0 && qtyOnHand > 0) continue;
 
-      // Order enough for two lead-time cycles, or twice the minimum level, whichever is larger.
-      const targetLevel = Math.max(Math.ceil((leadTimeDemand + safetyStock) * 2), minAlert * 2, 1);
-      const recommendedQty = Math.max(targetLevel - qtyOnHand, 1);
+      // Order up to: lead-time demand + safety + the business's cover period (e.g. 7 days for
+      // a minimarket, 45 for a warehouse), or twice the minimum level when there is no sales
+      // history; then round up to whole packs where the business buys by the carton/pallet.
+      const coverDemand = avgDailyVelocity * profile.reorder.coverDays;
+      const targetLevel = Math.max(Math.ceil(leadTimeDemand + safetyStock + coverDemand), minAlert * 2, 1);
+      const recommendedQty = roundToPack(Math.max(targetLevel - qtyOnHand, 1), item.packSize, profile);
       const urgency: ReorderRecommendation['urgency'] =
         qtyOnHand <= 0 ? 'critical' : qtyOnHand <= reorderPoint * 0.5 ? 'high' : qtyOnHand <= reorderPoint * 0.8 ? 'medium' : 'low';
       const location = locations.find((l) => l.id === item.locationId) || defaultLoc;
@@ -1747,13 +1769,17 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         recommendedOrderQuantity: recommendedQty,
         estimatedCost: recommendedQty * (item.costPrice || 0),
         urgency,
-        reason: qtyOnHand <= 0 ? 'Out of stock' : `At or below reorder point (${Math.ceil(reorderPoint)})`,
+        reason: expired && profile.expiry.blockExpiredIssue
+          ? 'Expired stock: write off and replace'
+          : qtyOnHand <= 0
+            ? 'Out of stock'
+            : `At or below reorder point (${Math.ceil(reorderPoint)})`,
       });
     }
 
     const urgencyOrder = { critical: 0, high: 1, medium: 2, low: 3 };
     return recommendations.sort((a, b) => urgencyOrder[a.urgency] - urgencyOrder[b.urgency]);
-  }, [items, ledgerEntries, locations, suppliers]);
+  }, [items, ledgerEntries, locations, suppliers, profile]);
 
   // --- Supplier actions ---
   const addSupplier = async (
@@ -2044,6 +2070,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         theme,
         setTheme,
         businessType,
+        profile,
         setBusinessType,
         hasCompletedOnboarding,
         setHasCompletedOnboarding,

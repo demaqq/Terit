@@ -17,36 +17,29 @@ import {
 } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
 import { CreditRecord, DebtStatus, PaymentMethod } from '../types/inventory';
-import { BUSINESS_PRESET_CREDIT_RECORDS } from '../data/businessPresets';
+import { loadCreditRecords, saveCreditRecords, outstandingForCustomer, isOverdue } from '../lib/creditRecords';
+import { allowsFraction, defaultDueDate, expiryState } from '../data/businessProfiles';
 import { useToast } from '../components/Toast';
 import { ETRReceiptModal } from './ETRReceiptModal';
 
 export const CreditLedgerView: React.FC = () => {
-  const { items, companyProfile, businessType, t } = useInventory();
+  const { items, companyProfile, businessType, profile, quickAdjustStock, t } = useInventory();
   const { toast } = useToast();
+  const customerNoun = t(profile.customerNounKey);
 
-  const loadRecordsForBiz = (biz: typeof businessType): CreditRecord[] => {
-    try {
-      const saved = localStorage.getItem(`terit_credit_records_${biz}`);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch {}
-    return BUSINESS_PRESET_CREDIT_RECORDS[biz] || BUSINESS_PRESET_CREDIT_RECORDS.shop;
-  };
-
-  const [records, setRecords] = useState<CreditRecord[]>(() => loadRecordsForBiz(businessType));
+  const [records, setRecords] = useState<CreditRecord[]>(() => loadCreditRecords(businessType));
 
   useEffect(() => {
-    setRecords(loadRecordsForBiz(businessType));
+    setRecords(loadCreditRecords(businessType));
   }, [businessType]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(`terit_credit_records_${businessType}`, JSON.stringify(records));
-    } catch {}
+    saveCreditRecords(businessType, records);
   }, [records, businessType]);
+
+  // Status follows the due date: an unpaid balance past its due date is overdue.
+  const effectiveStatus = (r: CreditRecord): DebtStatus =>
+    r.remainingAmount <= 0 ? 'paid' : isOverdue(r) ? 'overdue' : r.paidAmount > 0 ? 'partial' : 'unpaid';
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -56,7 +49,7 @@ export const CreditLedgerView: React.FC = () => {
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
   const [etrTargetRecord, setEtrTargetRecord] = useState<CreditRecord | null>(null);
 
-  const getDefaultDueDate = () => new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0];
+  const getDefaultDueDate = () => defaultDueDate(profile);
 
   // Settlement Form State
   const [settleAmount, setSettleAmount] = useState<number>(0);
@@ -66,8 +59,12 @@ export const CreditLedgerView: React.FC = () => {
   // New Credit Form State
   const [newCustName, setNewCustName] = useState('');
   const [newCustPhone, setNewCustPhone] = useState('+251 9');
-  const [newTotalAmount, setNewTotalAmount] = useState<number>(5000);
-  const [newPaidDown, setNewPaidDown] = useState<number>(1000);
+  const [newItemId, setNewItemId] = useState<string>('');
+  const [newQty, setNewQty] = useState<number>(1);
+  const [newPaidDown, setNewPaidDown] = useState<number>(0);
+  const newItem = items.find((i) => i.id === newItemId);
+  const newTotalAmount = newItem ? Math.round(newItem.unitPrice * (Number(newQty) || 0) * 100) / 100 : 0;
+  const newCustomerOwes = outstandingForCustomer(records, newCustName, newCustPhone);
   const [newDueDate, setNewDueDate] = useState<string>(getDefaultDueDate);
   const [newNotes, setNewNotes] = useState('');
 
@@ -78,14 +75,14 @@ export const CreditLedgerView: React.FC = () => {
         r.customerName.toLowerCase().includes(search.toLowerCase()) ||
         r.customerPhone.includes(search) ||
         r.invoiceNumber.toLowerCase().includes(search.toLowerCase());
-      const matchStatus = statusFilter === 'all' || r.status === statusFilter;
+      const matchStatus = statusFilter === 'all' || effectiveStatus(r) === statusFilter;
       return matchSearch && matchStatus;
     });
   }, [records, search, statusFilter]);
 
   // Aggregate Metrics
   const totalDebtOutstanding = records.reduce((sum, r) => sum + r.remainingAmount, 0);
-  const totalOverdue = records.filter((r) => r.status === 'overdue').reduce((sum, r) => sum + r.remainingAmount, 0);
+  const totalOverdue = records.filter((r) => isOverdue(r)).reduce((sum, r) => sum + r.remainingAmount, 0);
   const activeDebtorsCount = records.filter((r) => r.remainingAmount > 0).length;
   const totalCollected = records.reduce((sum, r) => sum + r.paidAmount, 0);
 
@@ -132,33 +129,66 @@ export const CreditLedgerView: React.FC = () => {
       toast(t('payment_record_updated_toast') || 'Payment record updated. Terit does not process or verify the payment.', 'success');
   };
 
-  const handleCreateCredit = (e: React.FormEvent) => {
+  const handleCreateCredit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCustName.trim()) {
       toast(t('credit_customer_required') || 'Please enter customer name.', 'error');
       return;
     }
+    if (!newItem) {
+      toast(t('credit_item_required'), 'error');
+      return;
+    }
+    const qty = Number(newQty);
+    const fractional = allowsFraction(newItem.unitOfMeasure, profile);
+    if (!Number.isFinite(qty) || qty <= 0 || (!fractional && !Number.isInteger(qty))) {
+      toast(t(fractional ? 'credit_qty_invalid' : 'add_item_error_whole_units'), 'error');
+      return;
+    }
+    if (qty > newItem.quantity) {
+      toast(t('credit_qty_exceeds_stock').replace('{qty}', String(newItem.quantity)), 'error');
+      return;
+    }
+    if (profile.expiry.blockExpiredIssue && expiryState(newItem, profile) === 'expired') {
+      toast(t('expired_issue_blocked'), 'error');
+      return;
+    }
+    const paid = Math.min(Math.max(0, Number(newPaidDown) || 0), newTotalAmount);
+    const remaining = Math.round((newTotalAmount - paid) * 100) / 100;
+    const limit = profile.credit.limitPerCustomer;
+    if (limit !== null && newCustomerOwes + remaining > limit) {
+      toast(
+        t('credit_limit_exceeded')
+          .replace('{limit}', limit.toLocaleString())
+          .replace('{owes}', newCustomerOwes.toLocaleString()),
+        'error'
+      );
+      return;
+    }
 
-    const remaining = Math.max(0, newTotalAmount - newPaidDown);
-    const status: DebtStatus = remaining === 0 ? 'paid' : newPaidDown > 0 ? 'partial' : 'unpaid';
+    const status: DebtStatus = remaining === 0 ? 'paid' : paid > 0 ? 'partial' : 'unpaid';
+    const invoiceNumber = `INV-${new Date().getFullYear()}-${Date.now().toString().slice(-6)}`;
+
+    // The goods leave the shelf now, even though payment comes later.
+    await quickAdjustStock(newItem.id, -qty, `${t('credit_sale_reason')} ${invoiceNumber} · ${newCustName.trim()}`, invoiceNumber);
 
     const newRec: CreditRecord = {
       id: `cr-${Date.now()}`,
-      customerName: newCustName,
+      customerName: newCustName.trim(),
       customerPhone: newCustPhone,
-      invoiceNumber: `INV-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
-      totalAmount: Number(newTotalAmount),
-      paidAmount: Number(newPaidDown),
+      invoiceNumber,
+      totalAmount: newTotalAmount,
+      paidAmount: paid,
       remainingAmount: remaining,
       dueDate: newDueDate,
       status,
       itemsPurchased: [
         {
-          itemId: items[0]?.id || 'item-1',
-          itemName: items[0]?.name || t('app_name'),
-          sku: items[0]?.sku || 'GEN-01',
-          quantity: 1,
-          unitPrice: Number(newTotalAmount),
+          itemId: newItem.id,
+          itemName: newItem.name,
+          sku: newItem.sku,
+          quantity: qty,
+          unitPrice: newItem.unitPrice,
         },
       ],
       paymentMethod: 'telebirr',
@@ -166,12 +196,16 @@ export const CreditLedgerView: React.FC = () => {
       createdAt: new Date().toISOString().split('T')[0],
     };
 
-    setRecords([newRec, ...records]);
+    setRecords((prev) => [newRec, ...prev]);
     setIsNewCreditOpen(false);
     setNewCustName('');
     setNewCustPhone('+251 9');
+    setNewItemId('');
+    setNewQty(1);
+    setNewPaidDown(0);
     setNewDueDate(getDefaultDueDate());
     setNewNotes('');
+    toast(t('credit_sale_recorded_toast').replace('{invoice}', invoiceNumber), 'success');
   };
 
   return (
@@ -307,14 +341,14 @@ export const CreditLedgerView: React.FC = () => {
                 </div>
                 <span
                   className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase font-mono ${
-                    r.status === 'paid'
+                    effectiveStatus(r) === 'paid'
                       ? 'bg-emerald-500/10 text-emerald-600'
-                      : r.status === 'overdue'
+                      : effectiveStatus(r) === 'overdue'
                       ? 'bg-rose-500/10 text-rose-600'
                       : 'bg-amber-500/10 text-amber-600'
                   }`}
                 >
-                  {t(`credit_status_${r.status}`) || r.status}
+                  {t(`credit_status_${effectiveStatus(r)}`) || effectiveStatus(r)}
                 </span>
               </div>
 
@@ -327,7 +361,7 @@ export const CreditLedgerView: React.FC = () => {
                 </div>
                 <div className="text-right">
                   <div className="text-[10px] text-slate-400">{t('due_date_label')}</div>
-                  <div className={`font-bold ${r.status === 'overdue' ? 'text-rose-500' : 'text-slate-600'}`}>
+                  <div className={`font-bold ${effectiveStatus(r) === 'overdue' ? 'text-rose-500' : 'text-slate-600'}`}>
                     {r.dueDate}
                   </div>
                 </div>
@@ -395,21 +429,21 @@ export const CreditLedgerView: React.FC = () => {
                     {r.remainingAmount.toLocaleString()} ETB
                   </td>
                   <td className="py-3 px-3 text-center font-mono">
-                    <span className={r.status === 'overdue' ? 'text-rose-600 font-bold' : 'text-slate-500'}>
+                    <span className={effectiveStatus(r) === 'overdue' ? 'text-rose-600 font-bold' : 'text-slate-500'}>
                       {r.dueDate}
                     </span>
                   </td>
                   <td className="py-3 px-3 text-center">
                     <span
                       className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase font-mono ${
-                        r.status === 'paid'
+                        effectiveStatus(r) === 'paid'
                           ? 'bg-emerald-500/10 text-emerald-600'
-                          : r.status === 'overdue'
+                          : effectiveStatus(r) === 'overdue'
                           ? 'bg-rose-500/10 text-rose-600'
                           : 'bg-amber-500/10 text-amber-600'
                       }`}
                     >
-                      {t(`credit_status_${r.status}`) || r.status}
+                      {t(`credit_status_${effectiveStatus(r)}`) || effectiveStatus(r)}
                     </span>
                   </td>
                   <td className="py-3 px-4 text-right">
@@ -636,7 +670,7 @@ export const CreditLedgerView: React.FC = () => {
 
             <form onSubmit={handleCreateCredit} className="space-y-3 text-xs">
               <div>
-                <label className="block font-semibold mb-1">{t('credit_customer_name_label')}</label>
+                <label className="block font-semibold mb-1">{customerNoun} *</label>
                 <input
                   type="text"
                   required
@@ -680,29 +714,79 @@ export const CreditLedgerView: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-semibold mb-1">{t('credit_total_label') || 'Total Amount (ETB) *'}</label>
-                  <input
-                    type="number"
-                    min="1"
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="sm:col-span-2">
+                  <label htmlFor="credit-item" className="block font-semibold mb-1">{t('credit_item_label')}</label>
+                  <select
+                    id="credit-item"
                     required
-                    value={newTotalAmount}
-                    onChange={(e) => setNewTotalAmount(Number(e.target.value))}
-                    className="w-full p-2 rounded-xl bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs font-mono font-bold text-slate-900 dark:text-slate-100"
-                  />
+                    value={newItemId}
+                    onChange={(e) => setNewItemId(e.target.value)}
+                    className="w-full p-2 rounded-xl bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 cursor-pointer"
+                  >
+                    <option value="">{t('bundle_pick_item')}</option>
+                    {items
+                      .filter((i) => !i.isQuarantined)
+                      .map((i) => {
+                        const expired = profile.expiry.blockExpiredIssue && expiryState(i, profile) === 'expired';
+                        return (
+                          <option key={i.id} value={i.id} disabled={i.quantity <= 0 || expired}>
+                            {i.name} · {i.unitPrice.toLocaleString()} ETB · {i.quantity} {i.unitOfMeasure}
+                            {expired ? ` (${t('expired_label')})` : ''}
+                          </option>
+                        );
+                      })}
+                  </select>
                 </div>
                 <div>
-                  <label className="block font-semibold mb-1">{t('credit_advance_label') || 'Advance Down Payment (ETB)'}</label>
+                  <label htmlFor="credit-qty" className="block font-semibold mb-1">{t('credit_qty_label')}</label>
                   <input
+                    id="credit-qty"
+                    type="number"
+                    min={allowsFraction(newItem?.unitOfMeasure, profile) ? '0.01' : '1'}
+                    step={allowsFraction(newItem?.unitOfMeasure, profile) ? 'any' : '1'}
+                    required
+                    value={newQty}
+                    onChange={(e) => setNewQty(Number(e.target.value))}
+                    className="w-full p-2 rounded-xl bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs font-mono text-slate-900 dark:text-slate-100"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <span className="block font-semibold mb-1">{t('credit_total_label') || 'Total Amount (ETB) *'}</span>
+                  <div className="w-full p-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs font-mono font-bold text-slate-900 dark:text-slate-100 tabular-nums">
+                    {newTotalAmount.toLocaleString()} ETB
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="credit-paid" className="block font-semibold mb-1">{t('credit_advance_label') || 'Advance Down Payment (ETB)'}</label>
+                  <input
+                    id="credit-paid"
                     type="number"
                     min="0"
+                    max={newTotalAmount || undefined}
                     value={newPaidDown}
                     onChange={(e) => setNewPaidDown(Number(e.target.value))}
                     className="w-full p-2 rounded-xl bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs font-mono font-bold text-emerald-700 dark:text-emerald-400"
                   />
                 </div>
               </div>
+
+              <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                {t('credit_terms_hint')
+                  .replace('{days}', String(profile.credit.termDays))
+                  .replace(
+                    '{limit}',
+                    profile.credit.limitPerCustomer === null ? t('credit_no_limit') : `${profile.credit.limitPerCustomer.toLocaleString()} ETB`
+                  )}
+                {newCustomerOwes > 0 && (
+                  <span className="block mt-0.5 font-semibold text-amber-700 dark:text-amber-400">
+                    {t('credit_customer_owes').replace('{owes}', newCustomerOwes.toLocaleString())}
+                  </span>
+                )}
+              </p>
 
               <div>
                 <label className="block font-semibold mb-1">{t('credit_notes_label') || 'Credit Terms / Notes'}</label>

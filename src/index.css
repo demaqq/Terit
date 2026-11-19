@@ -15,9 +15,11 @@
   --terit-border-hover: rgba(212, 91, 37, 0.35);
   --terit-text-muted: #3a4256;
   --terit-bg-muted: rgba(234, 227, 210, 0.95);
-  --terit-glass-bg: linear-gradient(155deg, rgba(234, 227, 210, 0.85) 0%, rgba(255, 255, 255, 0.58) 100%);
-  --terit-glass-sub-bg: linear-gradient(155deg, rgba(234, 227, 210, 0.72) 0%, rgba(245, 240, 228, 0.52) 100%);
-  --terit-glass-border: 1px solid rgba(255, 255, 255, 0.75);
+  /* Light mode: near-opaque white surfaces with a visible hairline, so cards separate
+     clearly from the warm page background (the old beige-on-beige glass did not). */
+  --terit-glass-bg: linear-gradient(160deg, rgba(255, 255, 255, 0.97) 0%, rgba(252, 250, 246, 0.95) 100%);
+  --terit-glass-sub-bg: #F6F3EC;
+  --terit-glass-border: 1px solid rgba(17, 22, 37, 0.11);
   --terit-glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.95);
   --terit-glass-shadow: 0 16px 40px -10px rgba(17, 22, 37, 0.12), 0 3px 8px -1px rgba(17, 22, 37, 0.05);
   color-scheme: light;
@@ -51,11 +53,10 @@
 @layer base {
   body {
     @apply transition-colors duration-200;
-    background-color: #EAE3D2;
+    background-color: #EFEBE2;
     background-image:
-      radial-gradient(1200px circle at 15% 10%, rgba(255, 255, 255, 0.45), transparent 48%),
-      radial-gradient(1000px circle at 85% 90%, rgba(212, 91, 37, 0.08), transparent 52%),
-      linear-gradient(180deg, #EAE3D2 0%, #E2DAC5 100%);
+      radial-gradient(1000px circle at 85% 90%, rgba(212, 91, 37, 0.05), transparent 52%),
+      linear-gradient(180deg, #F2EFE8 0%, #EAE5DA 100%);
     background-attachment: fixed;
     color: #111625;
     font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
@@ -132,10 +133,10 @@
   }
 
   .terit-modal {
-    background: linear-gradient(160deg, rgba(234, 227, 210, 0.92) 0%, rgba(222, 215, 198, 0.88) 100%);
+    background: #FFFFFF;
     backdrop-filter: blur(30px) saturate(185%);
     -webkit-backdrop-filter: blur(30px) saturate(185%);
-    border: 1px solid rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(17, 22, 37, 0.12);
     box-shadow: 0 30px 70px -15px rgba(17, 22, 37, 0.22), inset 0 1px 0 rgba(255, 255, 255, 1);
   }
 
@@ -333,3 +334,45 @@
 .dark .border-slate-700 {
   border-color: transparent;
 }
+
+
+/*
+ * Light-mode legibility. Components use Tailwind's light greys and bright accent shades
+ * for secondary text; on the warm light background several fall below WCAG AA (4.5:1).
+ * These overrides apply only when dark mode is off and darken text to readable shades.
+ * Dark mode is untouched.
+ */
+html:not(.dark) .text-slate-300 { color: #5b6476; }
+html:not(.dark) .text-slate-400 { color: #586274; }
+html:not(.dark) .text-slate-500 { color: #4b5466; }
+html:not(.dark) .text-slate-600 { color: #3f4757; }
+html:not(.dark) .text-gray-400,
+html:not(.dark) .text-gray-500 { color: #4b5466; }
+html:not(.dark) .text-amber-500,
+html:not(.dark) .text-amber-600 { color: #a8480f; }
+html:not(.dark) .text-orange-500,
+html:not(.dark) .text-orange-600 { color: #b43f0c; }
+html:not(.dark) .text-emerald-500,
+html:not(.dark) .text-emerald-600,
+html:not(.dark) .text-green-500,
+html:not(.dark) .text-green-600 { color: #047857; }
+html:not(.dark) .text-sky-500,
+html:not(.dark) .text-blue-500 { color: #0369a1; }
+html:not(.dark) .text-rose-500,
+html:not(.dark) .text-red-500 { color: #be123c; }
+html:not(.dark) .text-indigo-500,
+html:not(.dark) .text-purple-500 { color: #5b21b6; }
+/* Icons may keep their brighter brand colour; only text-bearing elements are darkened. */
+html:not(.dark) svg.text-amber-500,
+html:not(.dark) svg.text-emerald-500,
+html:not(.dark) svg.text-sky-500,
+html:not(.dark) svg.text-rose-500,
+html:not(.dark) svg.text-indigo-500,
+html:not(.dark) svg.text-purple-500 { color: revert-layer; }
+
+/* Hairlines and placeholders that disappeared on the light surfaces */
+html:not(.dark) .border-slate-100,
+html:not(.dark) .border-slate-200 { border-color: #d5d9e0; }
+html:not(.dark) .placeholder\:text-slate-400::placeholder,
+html:not(.dark) input::placeholder,
+html:not(.dark) textarea::placeholder { color: #6b7385; }
