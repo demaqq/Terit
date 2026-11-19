@@ -21,6 +21,7 @@ import {
   deleteDoc,
   getDocs,
   writeBatch,
+  deleteField,
 } from 'firebase/firestore';
 import {
   InventoryItem,
@@ -183,9 +184,11 @@ const txsToLedger = (
   txs: typeof BUSINESS_PRESET_TRANSACTIONS.shop,
   scopeFn: (id: string) => string = (id) => id,
   userId?: string,
-  locationsList: Location[] = []
+  locationsList: Location[] = [],
+  costByItemId: Record<string, number> = {}
 ): StockLedgerEntry[] =>
   txs.map((tx) => {
+    const unitCost = costByItemId[tx.itemId] ?? 0;
     const matchedLoc = locationsList.find((l) => l.name === tx.location);
     const resolvedLocId = matchedLoc ? scopeFn(matchedLoc.id) : tx.location;
     return {
@@ -200,8 +203,8 @@ const txsToLedger = (
       sourceLocationName: tx.quantity < 0 ? tx.location : undefined,
       destinationLocationId: tx.quantity >= 0 ? resolvedLocId : undefined,
       destinationLocationName: tx.quantity >= 0 ? tx.location : undefined,
-      unitCost: 0,
-      totalCost: 0,
+      unitCost,
+      totalCost: unitCost * Math.abs(tx.quantity),
       previousQuantity: tx.previousQuantity ?? 0,
       newQuantity: tx.newQuantity ?? tx.quantity,
       referenceType: 'stock_adjustment' as const,
@@ -223,6 +226,12 @@ const isLegacyAustinData = (parsed: unknown): boolean => {
         ('name' in entry && typeof entry.name === 'string' && entry.name.includes('Austin')) ||
         ('sku' in entry && entry.sku === 'TRT-AUD-901'))
   );
+};
+
+const calculateStatus = (qty: number, min: number): ItemStatus => {
+  if (qty <= 0) return 'out_of_stock';
+  if (qty <= min) return 'low_stock';
+  return 'in_stock';
 };
 
 const VALID_BUSINESS_TYPES: BusinessType[] = [
@@ -478,8 +487,9 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     // Replay strictly in chronological order. ledgerEntries is kept newest-first for display,
     // and the outbound branch clamps at zero, so replaying newest-first silently drops
     // stock-outs that are processed before the inbound they consume.
+    const rank = (e: StockLedgerEntry) => (e.type === 'initial' ? 0 : e.destinationLocationId && !e.sourceLocationId ? 1 : 2);
     const chronological = [...ledgerEntries].sort(
-      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime() || rank(a) - rank(b)
     );
 
     for (const entry of chronological) {
@@ -536,23 +546,33 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return Array.from(balances.values());
   }, [ledgerEntries]);
 
-  // Sync item.quantity to default location balance when a ledger balance exists and differs
+  // Total on-hand per item across every location, derived from the ledger.
+  // This is the single source of truth for item.quantity once an item has ledger history.
+  const itemTotals = useMemo(() => {
+    const totals = new Map<string, number>();
+    for (const bal of stockBalances) {
+      totals.set(bal.itemId, (totals.get(bal.itemId) ?? 0) + bal.quantityOnHand);
+    }
+    return totals;
+  }, [stockBalances]);
+
+  // Keep item.quantity and item.status in step with the ledger total.
   useEffect(() => {
-    const defaultLoc = locations.find((l) => l.isDefault);
-    if (!defaultLoc) return;
     setItems((prev) => {
       let changed = false;
       const next = prev.map((item) => {
-        const balance = stockBalances.find((b) => b.itemId === item.id && b.locationId === defaultLoc.id);
-        if (balance && balance.quantityOnHand !== item.quantity) {
+        const total = itemTotals.get(item.id);
+        if (total === undefined) return item;
+        const status = calculateStatus(total, item.minStockAlert);
+        if (total !== item.quantity || status !== item.status) {
           changed = true;
-          return { ...item, quantity: balance.quantityOnHand };
+          return { ...item, quantity: total, status };
         }
         return item;
       });
       return changed ? next : prev;
     });
-  }, [stockBalances, locations]);
+  }, [itemTotals]);
 
   // --- Translation ---
   const t = useCallback((key: string): string => {
@@ -640,7 +660,14 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         })),
       }));
       const rawPresetLocations = BUSINESS_PRESET_LOCATIONS[type] || BUSINESS_PRESET_LOCATIONS.shop;
-      const nextLedger = txsToLedger(BUSINESS_PRESET_TRANSACTIONS[type] || [], scopeFn, user?.uid, rawPresetLocations);
+      const presetCosts = Object.fromEntries(BUSINESS_PRESET_ITEMS[type].map((it) => [it.id, it.costPrice || 0]));
+      const nextLedger = txsToLedger(
+        BUSINESS_PRESET_TRANSACTIONS[type] || [],
+        scopeFn,
+        user?.uid,
+        rawPresetLocations,
+        presetCosts
+      );
 
       setLocations(nextLocations);
       setWarehouses(nextWarehouses);
@@ -683,7 +710,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           for (const item of nextItems) batch.set(doc(db, 'inventory_items', item.id), stripUndefined(item));
           for (const po of nextPOs) batch.set(doc(db, 'purchase_orders', po.id), stripUndefined(po));
           for (const tx of nextLedger) batch.set(doc(db, 'stock_ledger', tx.id), stripUndefined(tx));
-          await batch.commit();
+          batch.commit().catch((e) => console.warn('Preset sync notice:', e));
         } catch (e) {
           console.warn('Preset sync notice:', e);
         }
@@ -710,7 +737,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           const batch = writeBatch(db);
           batch.set(doc(db, 'locations', defaultLoc.id), stripUndefined(defaultLoc));
           batch.set(doc(db, 'warehouses', defaultLoc.id), stripUndefined(defaultLoc));
-          await batch.commit();
+          batch.commit().catch((e) => console.warn('Default location sync notice:', e));
         } catch (e) {
           console.warn('Default location sync notice:', e);
         }
@@ -718,13 +745,11 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
 
     if (user) {
-      try {
-        await setDoc(
-          doc(db, 'users', user.uid),
-          { userId: user.uid, businessType: type, updatedAt: new Date().toISOString() },
-          { merge: true }
-        );
-      } catch {}
+      setDoc(
+        doc(db, 'users', user.uid),
+        { userId: user.uid, businessType: type, updatedAt: new Date().toISOString() },
+        { merge: true }
+      ).catch(() => {});
     }
   };
 
@@ -1109,19 +1134,30 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setIsGuestMode(true);
   };
 
-  const calculateStatus = (qty: number, min: number): ItemStatus => {
-    if (qty <= 0) return 'out_of_stock';
-    if (qty <= min) return 'low_stock';
-    return 'in_stock';
-  };
-
   // --- Core ledger engine ---
   const now = () => new Date().toISOString();
 
+  // Where an item's stock lives before it has any ledger history.
+  const homeLocationId = (item: InventoryItem): string => {
+    if (item.locationId && locations.some((l) => l.id === item.locationId)) return item.locationId;
+    return (locations.find((l) => l.isDefault) || locations[0])?.id || item.locationId || 'loc-default';
+  };
+
   const getItemQuantityAtLocation = useCallback((itemId: string, locationId: string): number => {
     const balance = stockBalances.find((b) => b.itemId === itemId && b.locationId === locationId);
-    return balance ? balance.quantityOnHand : 0;
-  }, [stockBalances]);
+    if (balance) return balance.quantityOnHand;
+    // No ledger history yet: the item's recorded quantity sits at its home location.
+    if (!itemTotals.has(itemId)) {
+      const item = items.find((i) => i.id === itemId);
+      if (item && homeLocationId(item) === locationId) return item.quantity;
+    }
+    return 0;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stockBalances, itemTotals, items, locations]);
+
+  // Items that already got an opening-balance entry during this session (itemTotals lags
+  // one render behind, so several movements in one action must not each post a baseline).
+  const baselinedItemsRef = useRef(new Set<string>());
 
   const getStockBalance = useCallback((itemId: string, locationId: string): StockBalance | undefined => {
     return stockBalances.find((b) => b.itemId === itemId && b.locationId === locationId);
@@ -1130,6 +1166,32 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const postLedgerEntry = async (
     entryData: Omit<StockLedgerEntry, 'id' | 'userId' | 'syncStatus' | 'createdAt' | 'updatedAt'>
   ): Promise<boolean> => {
+    if (entryData.type === 'initial') {
+      baselinedItemsRef.current.add(entryData.itemId);
+    } else if (!itemTotals.has(entryData.itemId) && !baselinedItemsRef.current.has(entryData.itemId)) {
+      // First movement of an item that predates the ledger: record its existing stock as an
+      // opening balance at its home location, so the movement applies on top of it.
+      const item = items.find((i) => i.id === entryData.itemId);
+      if (item && item.quantity > 0) {
+        const homeId = homeLocationId(item);
+        await postLedgerEntry({
+          itemId: item.id,
+          itemName: item.name,
+          sku: item.sku,
+          type: 'initial',
+          quantity: item.quantity,
+          destinationLocationId: homeId,
+          destinationLocationName: locations.find((l) => l.id === homeId)?.name || item.location || 'Main Warehouse',
+          unitCost: item.costPrice,
+          totalCost: item.quantity * item.costPrice,
+          referenceType: 'initial',
+          reason: 'Opening stock balance',
+        });
+      } else {
+        baselinedItemsRef.current.add(entryData.itemId);
+      }
+    }
+
     const id = 'ledger-' + crypto.randomUUID();
     const ts = now();
     const entry: StockLedgerEntry = {
@@ -1172,67 +1234,42 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
     }
 
-    // Persist to Firestore if online
+    // Persist to Firestore without blocking the UI: Firestore applies the write to its
+    // local cache immediately, but the promise only settles when the server acknowledges
+    // it, which never happens while offline. Guests have no cloud account, so their
+    // ledger lives only in local state/localStorage.
     if (user) {
-      try {
-        await setDoc(doc(db, 'stock_ledger', id), stripUndefined(entry));
-        // Sync item quantities
-        const affectedItemIds = new Set([entry.itemId]);
-        if (entry.type === 'assembly' || entry.type === 'disassembly') {
-          const bundleItem = items.find((i) => i.id === entry.itemId);
-          if (bundleItem?.bundleComponents) {
-            bundleItem.bundleComponents.forEach((c) => affectedItemIds.add(c.itemId));
-          }
-        }
-        for (const itemId of affectedItemIds) {
-          const item = items.find((i) => i.id === itemId);
-          if (item) {
-            const defaultLoc = locations.find((l) => l.isDefault);
-            const locId = entry.destinationLocationId || entry.sourceLocationId || defaultLoc?.id || item.locationId || 'loc-default';
-            const balance = stockBalances.find((b) => b.itemId === itemId && b.locationId === locId);
-            const baseQty = balance ? balance.quantityOnHand : item.quantity;
-            let signedDelta = 0;
-            if (entry.itemId === itemId) {
-              if (entry.type === 'initial') {
-                signedDelta = balance ? entry.quantity : 0;
-              } else if (entry.destinationLocationId && !entry.sourceLocationId) {
-                signedDelta = entry.quantity;
-              } else if (entry.sourceLocationId && !entry.destinationLocationId) {
-                signedDelta = -entry.quantity;
-              }
-            }
-            const qty = Math.max(0, baseQty + signedDelta);
-            await updateItemFirestore(itemId, { quantity: qty, status: calculateStatus(qty, item.minStockAlert) });
-          }
-        }
-      } catch (e) {
+      setDoc(doc(db, 'stock_ledger', id), stripUndefined(entry)).catch((e) => {
         handleFirestoreError(e, OperationType.CREATE, `stock_ledger/${id}`);
-        // Queue for offline sync
-        offlineSync.queueOutbox({
-          localId: id,
-          operation: 'create',
-          collection: 'stock_ledger',
-          payload: stripUndefined(entry),
-        });
-      }
-    } else {
-      offlineSync.queueOutbox({
-        localId: id,
-        operation: 'create',
-        collection: 'stock_ledger',
-        payload: stripUndefined(entry),
+        offlineSync
+          .queueOutbox({ localId: id, operation: 'create', collection: 'stock_ledger', payload: stripUndefined(entry) })
+          .catch(() => {});
       });
+      const item = items.find((i) => i.id === entry.itemId);
+      if (item) {
+        // Total across all locations before this entry. Items with no ledger history yet
+        // are represented by item.quantity, except for the 'initial' baseline entry itself.
+        const before = itemTotals.has(item.id)
+          ? itemTotals.get(item.id)!
+          : entry.type === 'initial'
+            ? 0
+            : item.quantity;
+        let signedDelta = 0;
+        if (entry.destinationLocationId && !entry.sourceLocationId) signedDelta = entry.quantity;
+        else if (entry.sourceLocationId && !entry.destinationLocationId) signedDelta = -entry.quantity;
+        // transfers (source and destination) leave the total unchanged
+        const qty = Math.max(0, before + signedDelta);
+        updateItemFirestore(item.id, { quantity: qty, status: calculateStatus(qty, item.minStockAlert) });
+      }
     }
 
     return true;
   };
 
-  const updateItemFirestore = async (id: string, updates: Partial<InventoryItem>) => {
-    try {
-      await setDoc(doc(db, 'inventory_items', id), stripUndefined({ ...updates, updatedAt: now() }), { merge: true });
-    } catch (e) {
-      handleFirestoreError(e, OperationType.UPDATE, `inventory_items/${id}`);
-    }
+  const updateItemFirestore = (id: string, updates: Partial<InventoryItem>) => {
+    setDoc(doc(db, 'inventory_items', id), stripUndefined({ ...updates, updatedAt: now() }), { merge: true }).catch((e) =>
+      handleFirestoreError(e, OperationType.UPDATE, `inventory_items/${id}`)
+    );
   };
 
   // --- Item actions ---
@@ -1282,11 +1319,9 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
 
     if (user) {
-      try {
-        await setDoc(doc(db, 'inventory_items', id), stripUndefined(newItem));
-      } catch (e) {
-        handleFirestoreError(e, OperationType.CREATE, `inventory_items/${id}`);
-      }
+      setDoc(doc(db, 'inventory_items', id), stripUndefined(newItem)).catch((e) =>
+        handleFirestoreError(e, OperationType.CREATE, `inventory_items/${id}`)
+      );
     }
 
     return true;
@@ -1300,22 +1335,30 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const newMin = updates.minStockAlert !== undefined ? updates.minStockAlert : existing.minStockAlert;
     const status = calculateStatus(newQty, newMin);
 
-    const updatedItem: InventoryItem = {
-      ...existing,
-      ...updates,
-      userId: existing.userId || user?.uid,
-      status,
-      updatedAt: now(),
-    };
-
-    setItems((prev) => prev.map((item) => (item.id === id ? updatedItem : item)));
+    const updatedAt = now();
+    // Apply the patch to the latest local copy (not the possibly stale closure copy),
+    // so concurrent ledger-driven quantity changes are not overwritten.
+    setItems((prev) =>
+      prev.map((item) => {
+        if (item.id !== id) return item;
+        const merged: InventoryItem = { ...item, ...updates, userId: item.userId || user?.uid, updatedAt };
+        for (const [k, v] of Object.entries(updates)) {
+          if (v === undefined) delete (merged as unknown as Record<string, unknown>)[k];
+        }
+        merged.status = calculateStatus(merged.quantity, merged.minStockAlert);
+        return merged;
+      })
+    );
 
     if (user) {
-      try {
-        await setDoc(doc(db, 'inventory_items', id), stripUndefined(updatedItem));
-      } catch (e) {
-        handleFirestoreError(e, OperationType.UPDATE, `inventory_items/${id}`);
+      // Merge only the changed fields; an explicit undefined removes the field.
+      const patch: Record<string, unknown> = { userId: existing.userId || user.uid, status, updatedAt };
+      for (const [k, v] of Object.entries(updates)) {
+        patch[k] = v === undefined ? deleteField() : stripUndefined(v);
       }
+      setDoc(doc(db, 'inventory_items', id), patch, { merge: true }).catch((e) =>
+        handleFirestoreError(e, OperationType.UPDATE, `inventory_items/${id}`)
+      );
     }
     return true;
   };
@@ -1323,11 +1366,9 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const deleteItem = async (id: string): Promise<boolean> => {
     setItems((prev) => prev.filter((i) => i.id !== id));
     if (user) {
-      try {
-        await deleteDoc(doc(db, 'inventory_items', id));
-      } catch (e) {
-        handleFirestoreError(e, OperationType.DELETE, `inventory_items/${id}`);
-      }
+      deleteDoc(doc(db, 'inventory_items', id)).catch((e) =>
+        handleFirestoreError(e, OperationType.DELETE, `inventory_items/${id}`)
+      );
     }
     return true;
   };
@@ -1347,11 +1388,9 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     };
     setLocations((prev) => [...prev, newLoc]);
     if (user) {
-      try {
-        await setDoc(doc(db, 'locations', id), stripUndefined(newLoc));
-      } catch (e) {
-        handleFirestoreError(e, OperationType.CREATE, `locations/${id}`);
-      }
+      setDoc(doc(db, 'locations', id), stripUndefined(newLoc)).catch((e) =>
+        handleFirestoreError(e, OperationType.CREATE, `locations/${id}`)
+      );
     }
     return true;
   };
@@ -1362,11 +1401,9 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const updated: Location = { ...existing, ...updates, userId: existing.userId || user?.uid, updatedAt: now() };
     setLocations((prev) => prev.map((l) => (l.id === id ? updated : l)));
     if (user) {
-      try {
-        await setDoc(doc(db, 'locations', id), stripUndefined(updated));
-      } catch (e) {
-        handleFirestoreError(e, OperationType.UPDATE, `locations/${id}`);
-      }
+      setDoc(doc(db, 'locations', id), stripUndefined(updated)).catch((e) =>
+        handleFirestoreError(e, OperationType.UPDATE, `locations/${id}`)
+      );
     }
     return true;
   };
@@ -1376,11 +1413,9 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     if (loc?.isDefault) return false;
     setLocations((prev) => prev.filter((l) => l.id !== id));
     if (user) {
-      try {
-        await deleteDoc(doc(db, 'locations', id));
-      } catch (e) {
-        handleFirestoreError(e, OperationType.DELETE, `locations/${id}`);
-      }
+      deleteDoc(doc(db, 'locations', id)).catch((e) =>
+        handleFirestoreError(e, OperationType.DELETE, `locations/${id}`)
+      );
     }
     return true;
   };
@@ -1520,27 +1555,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const item = items.find((i) => i.id === itemId);
     if (!item) return false;
 
-    const existingBalance = stockBalances.find((b) => b.itemId === itemId && b.locationId === locationId);
-    const currentQty = existingBalance ? existingBalance.quantityOnHand : item.quantity;
-    const newQty = Math.max(0, currentQty + delta);
-
-    if (!existingBalance && item.quantity > 0) {
-      await postLedgerEntry({
-        itemId: item.id,
-        itemName: item.name,
-        sku: item.sku,
-        type: 'initial',
-        quantity: item.quantity,
-        sourceLocationId: undefined,
-        sourceLocationName: undefined,
-        destinationLocationId: locationId,
-        destinationLocationName: locations.find((l) => l.id === locationId)?.name || item.location || 'Main Warehouse',
-        unitCost: item.costPrice,
-        totalCost: item.quantity * item.costPrice,
-        referenceType: 'initial',
-        reason: 'Opening stock baseline',
-      });
-    }
+    if (delta === 0) return true;
 
     await postLedgerEntry({
       itemId,
@@ -1559,7 +1574,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       reason,
     });
 
-    await updateItem(itemId, { quantity: newQty, status: calculateStatus(newQty, item.minStockAlert) });
+    // item.quantity/status follow the ledger (see the itemTotals effect and postLedgerEntry).
     return true;
   };
 
@@ -1673,62 +1688,72 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // --- Reorder recommendations (AI) ---
   const getReorderRecommendations = useCallback((): ReorderRecommendation[] => {
     const recommendations: ReorderRecommendation[] = [];
-    const defaultLoc = locations.find((l) => l.isDefault);
-    const locId = defaultLoc?.id || 'loc-default';
-
+    const defaultLoc = locations.find((l) => l.isDefault) || locations[0];
     const nowMs = Date.now();
-    const ninetyDaysAgo = nowMs - 90 * 24 * 60 * 60 * 1000;
+    const windowDays = 90;
+    const windowStart = nowMs - windowDays * 24 * 60 * 60 * 1000;
 
     for (const item of items) {
       if (item.isBundle) continue;
 
-      const balance = stockBalances.find((b) => b.itemId === item.id && b.locationId === locId);
-      const qtyOnHand = balance ? balance.quantityOnHand : 0;
+      // item.quantity is kept equal to the ledger total across all locations.
+      const qtyOnHand = item.quantity;
+      const minAlert = Math.max(0, item.minStockAlert || 0);
 
-      // Calculate average daily velocity from outbound ledger entries in last 90 days
-      const outboundEntries = ledgerEntries.filter(
-        (e) => e.itemId === item.id &&
-          ((e.sourceLocationId === locId && e.quantity > 0) || (e.destinationLocationId === undefined && e.type === 'outbound')) &&
-          new Date(e.createdAt).getTime() > ninetyDaysAgo
-      );
-
-      const totalSold = outboundEntries.reduce((sum, e) => sum + e.quantity, 0);
-      const avgDailyVelocity = totalSold / 90;
+      // Demand = stock leaving the business (sales/outbound/adjustments) in the window.
+      // Transfers move stock between locations and are not demand.
+      const totalSold = ledgerEntries
+        .filter(
+          (e) =>
+            e.itemId === item.id &&
+            e.sourceLocationId &&
+            !e.destinationLocationId &&
+            e.type !== 'transfer' &&
+            new Date(e.createdAt).getTime() > windowStart
+        )
+        .reduce((sum, e) => sum + e.quantity, 0);
+      const avgDailyVelocity = totalSold / windowDays;
 
       const supplier = suppliers.find((s) => s.id === item.supplierId);
       const leadTimeDays = supplier?.leadTimeDays || 7;
 
-      // Reorder point = velocity * lead_time + safety stock (10% of lead time demand)
-      const safetyStock = avgDailyVelocity * leadTimeDays * 0.1;
-      const reorderPoint = avgDailyVelocity * leadTimeDays + safetyStock;
+      // Reorder point = lead-time demand + 10% safety stock, but never below the item's own
+      // minimum alert level, so low/out-of-stock items are flagged even with no sales history.
+      const leadTimeDemand = avgDailyVelocity * leadTimeDays;
+      const safetyStock = leadTimeDemand * 0.1;
+      const reorderPoint = Math.max(leadTimeDemand + safetyStock, minAlert);
 
-      if (qtyOnHand <= reorderPoint && avgDailyVelocity > 0) {
-        const recommendedQty = Math.ceil(reorderPoint * 2 - qtyOnHand); // 2x coverage
-        const urgency = qtyOnHand <= 0 ? 'critical' : qtyOnHand <= reorderPoint * 0.5 ? 'high' : qtyOnHand <= reorderPoint * 0.8 ? 'medium' : 'low';
-        recommendations.push({
-          itemId: item.id,
-          itemName: item.name,
-          sku: item.sku,
-          locationId: locId,
-          locationName: defaultLoc?.name || 'Main Warehouse',
-          quantityOnHand: qtyOnHand,
-          averageDailyVelocity: Math.round(avgDailyVelocity * 100) / 100,
-          leadTimeDays,
-          reorderPoint: Math.ceil(reorderPoint),
-          safetyStock: Math.ceil(safetyStock),
-          recommendedOrderQuantity: Math.max(recommendedQty, 1),
-          estimatedCost: Math.max(recommendedQty, 1) * item.costPrice,
-          urgency,
-          reason: qtyOnHand <= 0 ? 'Out of stock' : `Below reorder point (${Math.ceil(reorderPoint)})`,
-        });
-      }
+      if (qtyOnHand > reorderPoint) continue;
+      if (reorderPoint <= 0 && qtyOnHand > 0) continue;
+
+      // Order enough for two lead-time cycles, or twice the minimum level, whichever is larger.
+      const targetLevel = Math.max(Math.ceil((leadTimeDemand + safetyStock) * 2), minAlert * 2, 1);
+      const recommendedQty = Math.max(targetLevel - qtyOnHand, 1);
+      const urgency: ReorderRecommendation['urgency'] =
+        qtyOnHand <= 0 ? 'critical' : qtyOnHand <= reorderPoint * 0.5 ? 'high' : qtyOnHand <= reorderPoint * 0.8 ? 'medium' : 'low';
+      const location = locations.find((l) => l.id === item.locationId) || defaultLoc;
+
+      recommendations.push({
+        itemId: item.id,
+        itemName: item.name,
+        sku: item.sku,
+        locationId: location?.id || item.locationId || 'loc-default',
+        locationName: location?.name || item.location || 'Main Warehouse',
+        quantityOnHand: qtyOnHand,
+        averageDailyVelocity: Math.round(avgDailyVelocity * 100) / 100,
+        leadTimeDays,
+        reorderPoint: Math.ceil(reorderPoint),
+        safetyStock: Math.ceil(safetyStock),
+        recommendedOrderQuantity: recommendedQty,
+        estimatedCost: recommendedQty * (item.costPrice || 0),
+        urgency,
+        reason: qtyOnHand <= 0 ? 'Out of stock' : `At or below reorder point (${Math.ceil(reorderPoint)})`,
+      });
     }
 
-    return recommendations.sort((a, b) => {
-      const urgencyOrder = { critical: 0, high: 1, medium: 2, low: 3 };
-      return urgencyOrder[a.urgency] - urgencyOrder[b.urgency];
-    });
-  }, [items, ledgerEntries, locations, stockBalances, suppliers]);
+    const urgencyOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+    return recommendations.sort((a, b) => urgencyOrder[a.urgency] - urgencyOrder[b.urgency]);
+  }, [items, ledgerEntries, locations, suppliers]);
 
   // --- Supplier actions ---
   const addSupplier = async (
@@ -1745,11 +1770,9 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     };
     setSuppliers((prev) => [newSup, ...prev]);
     if (user) {
-      try {
-        await setDoc(doc(db, 'suppliers', id), stripUndefined(newSup));
-      } catch (e) {
-        handleFirestoreError(e, OperationType.CREATE, `suppliers/${id}`);
-      }
+      setDoc(doc(db, 'suppliers', id), stripUndefined(newSup)).catch((e) =>
+        handleFirestoreError(e, OperationType.CREATE, `suppliers/${id}`)
+      );
     }
     return true;
   };
@@ -1760,11 +1783,9 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const updated: Supplier = { ...existing, ...updates, userId: existing.userId || user?.uid, updatedAt: new Date().toISOString() };
     setSuppliers((prev) => prev.map((s) => (s.id === id ? updated : s)));
     if (user) {
-      try {
-        await setDoc(doc(db, 'suppliers', id), stripUndefined(updated));
-      } catch (e) {
-        handleFirestoreError(e, OperationType.UPDATE, `suppliers/${id}`);
-      }
+      setDoc(doc(db, 'suppliers', id), stripUndefined(updated)).catch((e) =>
+        handleFirestoreError(e, OperationType.UPDATE, `suppliers/${id}`)
+      );
     }
     return true;
   };
@@ -1772,11 +1793,9 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const deleteSupplier = async (id: string): Promise<boolean> => {
     setSuppliers((prev) => prev.filter((s) => s.id !== id));
     if (user) {
-      try {
-        await deleteDoc(doc(db, 'suppliers', id));
-      } catch (e) {
-        handleFirestoreError(e, OperationType.DELETE, `suppliers/${id}`);
-      }
+      deleteDoc(doc(db, 'suppliers', id)).catch((e) =>
+        handleFirestoreError(e, OperationType.DELETE, `suppliers/${id}`)
+      );
     }
     return true;
   };
@@ -1822,11 +1841,9 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     setPurchaseOrders((prev) => [newPO, ...prev]);
     if (user) {
-      try {
-        await setDoc(doc(db, 'purchase_orders', id), stripUndefined(newPO));
-      } catch (e) {
-        handleFirestoreError(e, OperationType.CREATE, `purchase_orders/${id}`);
-      }
+      setDoc(doc(db, 'purchase_orders', id), stripUndefined(newPO)).catch((e) =>
+        handleFirestoreError(e, OperationType.CREATE, `purchase_orders/${id}`)
+      );
     }
     toast(
       t('po_created_toast')
@@ -1846,11 +1863,9 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const updated: PurchaseOrder = { ...existing, ...updates, userId: existing.userId || user?.uid, updatedAt: new Date().toISOString() };
     setPurchaseOrders((prev) => prev.map((p) => (p.id === id ? updated : p)));
     if (user) {
-      try {
-        await setDoc(doc(db, 'purchase_orders', id), stripUndefined(updated));
-      } catch (e) {
-        handleFirestoreError(e, OperationType.UPDATE, `purchase_orders/${id}`);
-      }
+      setDoc(doc(db, 'purchase_orders', id), stripUndefined(updated)).catch((e) =>
+        handleFirestoreError(e, OperationType.UPDATE, `purchase_orders/${id}`)
+      );
     }
     if (updates.status === 'ordered' && existing.status !== 'ordered') {
       toast(t('po_dispatched_toast').replace('{poNumber}', existing.poNumber), 'success');
@@ -1877,30 +1892,6 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       if (item) {
         const targetLocId = item.locationId || fallbackLocId;
-        const existingBalance = stockBalances.find(
-          (b) => b.itemId === item.id && b.locationId === targetLocId
-        );
-        const currentQty = existingBalance ? existingBalance.quantityOnHand : item.quantity;
-
-        if (!existingBalance && item.quantity > 0) {
-          await postLedgerEntry({
-            itemId: item.id,
-            itemName: item.name,
-            sku: item.sku,
-            type: 'initial',
-            quantity: item.quantity,
-            sourceLocationId: undefined,
-            sourceLocationName: undefined,
-            destinationLocationId: targetLocId,
-            destinationLocationName:
-              locations.find((l) => l.id === targetLocId)?.name || item.location || defaultLoc?.name || 'Main Warehouse',
-            unitCost: item.costPrice,
-            totalCost: item.quantity * item.costPrice,
-            referenceType: 'initial',
-            reason: 'Opening stock baseline before PO receipt',
-          });
-        }
-
         await recordPurchaseReceipt(
           item.id,
           targetLocId,
@@ -1911,12 +1902,8 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           po.id
         );
 
-        const nextQty = currentQty + line.quantity;
-        await updateItem(item.id, {
-          quantity: nextQty,
-          costPrice: effectiveUnitCost,
-          status: calculateStatus(nextQty, item.minStockAlert),
-        });
+        // Quantity comes from the ledger; only the cost basis changes here.
+        await updateItem(item.id, { costPrice: effectiveUnitCost });
       } else {
         // Create new item from PO line
         await addItem({
@@ -1968,11 +1955,9 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     };
     setWarehouses((prev) => [...prev, newWH]);
     if (user) {
-      try {
-        await setDoc(doc(db, 'warehouses', id), stripUndefined(newWH));
-      } catch (e) {
-        handleFirestoreError(e, OperationType.CREATE, `warehouses/${id}`);
-      }
+      setDoc(doc(db, 'warehouses', id), stripUndefined(newWH)).catch((e) =>
+        handleFirestoreError(e, OperationType.CREATE, `warehouses/${id}`)
+      );
     }
     return true;
   };
@@ -1996,11 +1981,9 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setItems((prev) => [...itemsWithLoc, ...prev]);
     if (user) {
       for (const item of itemsWithLoc) {
-        try {
-          await setDoc(doc(db, 'inventory_items', item.id), stripUndefined({ ...item, userId: user.uid }));
-        } catch (e) {
-          handleFirestoreError(e, OperationType.CREATE, `inventory_items/${item.id}`);
-        }
+        setDoc(doc(db, 'inventory_items', item.id), stripUndefined({ ...item, userId: user.uid })).catch((e) =>
+          handleFirestoreError(e, OperationType.CREATE, `inventory_items/${item.id}`)
+        );
       }
     }
     return true;
@@ -2017,6 +2000,19 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       toast(t('offline_sync_error_toast'), 'error');
     }
   };
+
+  // Surface failed cloud writes once per burst instead of throwing into the UI.
+  useEffect(() => {
+    let lastShown = 0;
+    const onCloudError = () => {
+      const nowMs = Date.now();
+      if (nowMs - lastShown < 10_000) return;
+      lastShown = nowMs;
+      toast(t('cloud_save_failed_toast'), 'error');
+    };
+    window.addEventListener('terit:cloud-error', onCloudError);
+    return () => window.removeEventListener('terit:cloud-error', onCloudError);
+  }, [t, toast]);
 
   // Online/offline listeners
   useEffect(() => {

@@ -88,6 +88,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
 }) => {
   const { items, deleteItem, tier, importItems, warehouses, businessType, t } = useInventory();
   const { toast } = useToast();
+  const [showFilters, setShowFilters] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedLocation, setSelectedLocation] = useState('all');
@@ -538,7 +539,8 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
       {/* Filter and Search Bar */}
       <div className="terit-glass rounded-2xl p-3.5 space-y-3 transition-colors">
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
-          {/* Search Input */}
+          {/* Search Input (+ filter toggle on small screens) */}
+          <div className="flex items-center gap-2 flex-1 min-w-0">
           <div className="relative flex-1 min-w-0">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
@@ -549,9 +551,24 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
               className="w-full bg-white/80 dark:bg-slate-950/70 border border-slate-300 dark:border-slate-700 rounded-xl pl-9 pr-4 py-1.5 text-xs text-slate-900 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:border-amber-500"
             />
           </div>
+          <button
+            type="button"
+            onClick={() => setShowFilters((v) => !v)}
+            aria-expanded={showFilters}
+            className={`lg:hidden shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold cursor-pointer ${
+              showFilters || activeFilterCount > 0
+                ? 'bg-amber-500/10 border-amber-500/40 text-amber-700 dark:text-amber-400'
+                : 'bg-white/80 dark:bg-slate-950/70 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200'
+            }`}
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+            {t('filters_btn')}
+            {activeFilterCount > 0 && <span className="tabular-nums">({activeFilterCount})</span>}
+          </button>
+          </div>
 
           {/* Core Filter Dropdowns */}
-          <div className="flex flex-wrap items-center gap-2 min-w-0">
+          <div className={`${showFilters ? 'flex' : 'hidden'} lg:flex flex-wrap items-center gap-2 min-w-0`}>
             {/* Status Filter */}
             <select
               value={selectedStatus}
@@ -606,7 +623,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
         </div>
 
         {/* Business-Model-Specific Filters Strip */}
-        <div className="pt-2.5 border-t border-slate-900/8 dark:border-white/8 flex flex-col gap-2.5">
+        <div className={`${showFilters ? 'flex' : 'hidden'} lg:flex pt-2.5 border-t border-slate-900/8 dark:border-white/8 flex-col gap-2.5`}>
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-600 dark:text-slate-300 mr-1">
               <SlidersHorizontal className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />

@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { InventoryItem } from '../types/inventory';
 import { useInventory } from '../context/InventoryContext';
+import { ledgerDirection } from '../lib/ledger';
 
 interface ItemDetailsModalProps {
   isOpen: boolean;
@@ -272,12 +273,28 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
                     </div>
                   </div>
                   <div className="text-right font-mono">
-                    <span className={tx.quantity > 0 ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-rose-600 dark:text-rose-400 font-bold'}>
-                      {tx.quantity > 0 ? `+${tx.quantity}` : tx.quantity}
-                    </span>
-                    <div className="text-[10px] text-slate-500">
-                      {tx.previousQuantity} &rarr; {tx.newQuantity}
-                    </div>
+                    {(() => {
+                      const dir = ledgerDirection(tx);
+                      const q = Math.abs(tx.quantity);
+                      const cls =
+                        dir === 'in'
+                          ? 'text-emerald-600 dark:text-emerald-400'
+                          : dir === 'out'
+                            ? 'text-rose-600 dark:text-rose-400'
+                            : 'text-sky-600 dark:text-sky-400';
+                      const place =
+                        dir === 'transfer'
+                          ? `${tx.sourceLocationName || ''} → ${tx.destinationLocationName || ''}`
+                          : dir === 'in'
+                            ? tx.destinationLocationName
+                            : tx.sourceLocationName;
+                      return (
+                        <>
+                          <span className={`${cls} font-bold`}>{dir === 'in' ? `+${q}` : dir === 'out' ? `−${q}` : `⇄ ${q}`}</span>
+                          {place && <div className="text-[10px] text-slate-500">{place}</div>}
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               ))}

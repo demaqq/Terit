@@ -14,6 +14,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
+import { ledgerDirection } from '../lib/ledger';
 import { LedgerEntryType } from '../types/inventory';
 import { escapeHtml, printHtmlDocument } from '../lib/posHardware';
 import { useToast } from './Toast';
@@ -71,12 +72,13 @@ export const LedgerView: React.FC = () => {
   }, [transactions, searchTerm, typeFilter, sortDirection]);
 
   const summary = useMemo(() => {
+    // Transfers move stock between locations, so they count as neither in nor out.
     const inboundQty = filteredEntries
-      .filter((e) => e.quantity > 0 && (e.destinationLocationId || e.type === 'inbound' || e.type === 'purchase' || e.type === 'initial'))
-      .reduce((sum, e) => sum + e.quantity, 0);
+      .filter((e) => ledgerDirection(e) === 'in')
+      .reduce((sum, e) => sum + Math.abs(e.quantity), 0);
     const outboundQty = filteredEntries
-      .filter((e) => e.quantity > 0 && (e.sourceLocationId || e.type === 'outbound' || e.type === 'sale' || e.type === 'transfer'))
-      .reduce((sum, e) => sum + e.quantity, 0);
+      .filter((e) => ledgerDirection(e) === 'out')
+      .reduce((sum, e) => sum + Math.abs(e.quantity), 0);
     const totalValue = filteredEntries.reduce((sum, e) => sum + (e.totalCost ?? 0), 0);
     return { inboundQty, outboundQty, totalValue };
   }, [filteredEntries]);

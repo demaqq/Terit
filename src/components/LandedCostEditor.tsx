@@ -23,7 +23,10 @@ interface AllocationEntry {
 
 export const LandedCostEditor: React.FC = () => {
   const { purchaseOrders, updatePurchaseOrder, t } = useInventory();
-  const [selectedPoId, setSelectedPoId] = useState<string | null>(null);
+  // Preselect the first order that can still take costs (not received/cancelled).
+  const [selectedPoId, setSelectedPoId] = useState<string | null>(
+    () => purchaseOrders.find((p) => p.status === 'ordered' || p.status === 'draft')?.id ?? purchaseOrders[0]?.id ?? null
+  );
   const [allocations, setAllocations] = useState<Record<string, AllocationEntry[]>>({});
   const [distributionMode, setDistributionMode] = useState<'even' | 'value' | 'qty'>('even');
   const [costType, setCostType] = useState<CostType>('shipping');
@@ -253,7 +256,9 @@ export const LandedCostEditor: React.FC = () => {
       {!selectedPo ? (
         <div className="text-center py-16">
           <Truck className="w-12 h-12 mx-auto mb-4 text-slate-300" />
-          <p className="text-slate-500 dark:text-slate-400 text-sm">{t('landed_cost_no_po')}</p>
+          <p className="text-slate-500 dark:text-slate-400 text-sm max-w-sm mx-auto">
+            {purchaseOrders.length === 0 ? t('landed_cost_no_po') : t('landed_cost_select_po')}
+          </p>
         </div>
       ) : (
         <>

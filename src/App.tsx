@@ -28,7 +28,6 @@ import { BotMessageSquare, Boxes, Sparkles, Thermometer, Tag, Ship } from 'lucid
 
 const DashboardView = lazy(() => import('./components/DashboardView').then((m) => ({ default: m.DashboardView })));
 const InventoryView = lazy(() => import('./components/InventoryView').then((m) => ({ default: m.InventoryView })));
-const MovementsView = lazy(() => import('./components/MovementsView').then((m) => ({ default: m.MovementsView })));
 const PurchaseOrdersView = lazy(() => import('./components/PurchaseOrdersView').then((m) => ({ default: m.PurchaseOrdersView })));
 const SuppliersView = lazy(() => import('./components/SuppliersView').then((m) => ({ default: m.SuppliersView })));
 const WarehousesView = lazy(() => import('./components/WarehousesView').then((m) => ({ default: m.WarehousesView })));
@@ -278,7 +277,7 @@ function AppContent() {
 
       {/* Main Content Area */}
       <main className="flex-1 w-full min-w-0">
-        <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 lg:pb-8">
+        <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 lg:pb-28">
           <Suspense fallback={<ViewFallback />}>
             {activeTab === 'dashboard' && (
               <DashboardView
@@ -313,7 +312,6 @@ function AppContent() {
               />
             )}
 
-            {activeTab === 'movements' && <MovementsView />}
 
             {activeTab === 'procurement' && (
               <PurchaseOrdersView
@@ -339,7 +337,7 @@ function AppContent() {
               />
             )}
 
-            {activeTab === 'ledger' && <LedgerView />}
+            {(activeTab === 'ledger' || activeTab === 'movements') && <LedgerView />}
 
             {activeTab === 'bundles' && <BundleBuilder />}
 
@@ -402,7 +400,7 @@ function AppContent() {
 
       {/* Footer */}
       <footer className="border-t border-slate-900/10 dark:border-white/10 bg-white/70 dark:bg-slate-950/60 backdrop-blur-2xl py-4 text-center text-xs text-slate-700 dark:text-slate-300 mb-14 lg:mb-0">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div className="max-w-7xl mx-auto px-4 lg:pr-52 flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="font-medium">{t('app_name')} · {t('footer_tagline')}</div>
           <div className="flex items-center gap-4 text-slate-600 dark:text-slate-400">
             <span>{t('footer_sync_label')}</span>

@@ -342,7 +342,7 @@ export const ReorderDashboard: React.FC<ReorderDashboardProps> = ({
       )}
 
       {/* Summary KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <div className="min-w-0 terit-glass rounded-2xl p-4">
           <p className="text-xs text-slate-500 dark:text-slate-400 uppercase font-semibold mb-1">{t('reorder_items_needing')}</p>
           <p className={`text-2xl font-bold tabular-nums ${urgencyCounts.critical > 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-900 dark:text-white'}`}>

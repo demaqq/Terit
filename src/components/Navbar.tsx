@@ -19,6 +19,12 @@ import {
   Target,
 } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
+import { PRIMARY_NAV, SECONDARY_NAV } from '../navigation';
+
+const NAV_ACTIVE =
+  'bg-[rgba(212,91,37,0.15)] dark:bg-[rgba(212,91,37,0.25)] text-[#D45B25] dark:text-[#E8632B] font-bold border-[#D45B25]/50 shadow-xs';
+const NAV_IDLE =
+  'text-[#111625] dark:text-slate-300 hover:text-[#D45B25] dark:hover:text-white border-transparent hover:bg-white/50 dark:hover:bg-white/8';
 import { SupportedLanguage, BUSINESS_TYPES } from '../i18n/translations';
 
 interface NavbarProps {
@@ -100,21 +106,25 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const tierLabel = (tier || 'free').toUpperCase();
   const isPro = tier === 'pro';
-  const navItems = [
-    { id: 'dashboard', label: t('nav_dashboard') },
-    { id: 'inventory', label: t('nav_inventory'), icon: undefined },
-    { id: 'credit', label: t('nav_credit'), icon: CreditCard },
-    { id: 'staff', label: t('nav_staff'), icon: Users },
-    { id: 'reports', label: t('nav_reports'), icon: TrendingUp },
-    { id: 'procurement', label: t('nav_pos') },
-    { id: 'movements', label: t('nav_movements') },
-    { id: 'suppliers', label: t('nav_suppliers') },
-    { id: 'warehouses', label: t('nav_warehouses') },
-    { id: 'ledger', label: t('nav_ledger'), icon: Receipt },
-    { id: 'bundles', label: t('nav_bundles'), icon: Package },
-    { id: 'landed-cost', label: t('nav_landed_cost'), icon: Truck },
-    { id: 'reorder', label: t('nav_reorder'), icon: Target },
-  ];
+  const activeSecondary = SECONDARY_NAV.find((n) => n.id === activeTab);
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const moreMenuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!isMoreOpen) return;
+    const close = (e: MouseEvent | KeyboardEvent) => {
+      if (e instanceof KeyboardEvent) {
+        if (e.key === 'Escape') setIsMoreOpen(false);
+        return;
+      }
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) setIsMoreOpen(false);
+    };
+    document.addEventListener('mousedown', close);
+    document.addEventListener('keydown', close);
+    return () => {
+      document.removeEventListener('mousedown', close);
+      document.removeEventListener('keydown', close);
+    };
+  }, [isMoreOpen]);
 
   return (
     <header className="sticky top-0 z-40 bg-white/88 dark:bg-slate-950/70 backdrop-blur-2xl backdrop-saturate-150 border-b border-slate-900/10 dark:border-white/12 text-slate-900 dark:text-slate-100 shadow-[0_10px_32px_-8px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.95)] dark:shadow-[0_10px_32px_-8px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.08)] transition-colors">
@@ -346,26 +356,74 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Pinned Scrollable Nav Tabs (full width below top row) */}
         <div className="hidden lg:block border-t border-slate-900/8 dark:border-white/10">
-          <nav aria-label={t('nav_main_navigation')} className="flex items-center gap-1 py-1.5 overflow-x-auto no-scrollbar touch-pan-x">
-            {navItems.map((tab) => {
+          <nav aria-label={t('nav_main_navigation')} className="flex items-center gap-1 py-1.5 flex-wrap">
+            {PRIMARY_NAV.map((tab) => {
               const isActive = activeTab === tab.id;
-              const Icon = tab.icon;
+              const Icon = tab.Icon;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   aria-current={isActive ? 'page' : undefined}
                   className={`relative min-h-9 whitespace-nowrap shrink-0 px-3.5 py-1.5 rounded-[var(--terit-radius)] text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 cursor-pointer border ${
-                    isActive
-                      ? 'bg-[rgba(212,91,37,0.15)] dark:bg-[rgba(212,91,37,0.25)] text-[#D45B25] dark:text-[#E8632B] font-bold border-[#D45B25]/50 shadow-xs'
-                      : 'text-[#111625] dark:text-slate-300 hover:text-[#D45B25] dark:hover:text-white border-transparent hover:bg-white/50 dark:hover:bg-white/8'
+                    isActive ? NAV_ACTIVE : NAV_IDLE
                   }`}
                 >
-                  {Icon && <Icon className="w-3.5 h-3.5" />}
-                  <span>{tab.label}</span>
+                  <Icon className="w-3.5 h-3.5" />
+                  <span>{t(tab.labelKey)}</span>
                 </button>
               );
             })}
+            <span aria-hidden="true" className="mx-1 h-5 w-px bg-slate-900/10 dark:bg-white/15 shrink-0" />
+            <div className="relative shrink-0" ref={moreMenuRef}>
+              <button
+                type="button"
+                onClick={() => setIsMoreOpen((open) => !open)}
+                aria-haspopup="menu"
+                aria-expanded={isMoreOpen}
+                className={`min-h-9 whitespace-nowrap px-3.5 py-1.5 rounded-[var(--terit-radius)] text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 cursor-pointer border ${
+                  activeSecondary ? NAV_ACTIVE : NAV_IDLE
+                }`}
+              >
+                {activeSecondary ? (
+                  <>
+                    <activeSecondary.Icon className="w-3.5 h-3.5" />
+                    <span>{t(activeSecondary.labelKey)}</span>
+                  </>
+                ) : (
+                  <span>{t('more_nav')}</span>
+                )}
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isMoreOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {isMoreOpen && (
+                <div
+                  role="menu"
+                  className="absolute left-0 top-full mt-1.5 w-56 p-1.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-xl z-50"
+                >
+                  {SECONDARY_NAV.map((item) => {
+                    const isActive = activeTab === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        role="menuitem"
+                        onClick={() => {
+                          setActiveTab(item.id);
+                          setIsMoreOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-left cursor-pointer transition-colors ${
+                          isActive
+                            ? 'bg-[rgba(212,91,37,0.12)] text-[#D45B25] dark:text-[#E8632B]'
+                            : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+                        }`}
+                      >
+                        <item.Icon className={`w-4 h-4 ${item.iconClass}`} />
+                        <span>{t(item.labelKey)}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </nav>
         </div>
       </div>
