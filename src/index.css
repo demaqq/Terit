@@ -17,11 +17,11 @@
   --terit-bg-muted: rgba(234, 227, 210, 0.95);
   /* Light mode: near-opaque white surfaces with a visible hairline, so cards separate
      clearly from the warm page background (the old beige-on-beige glass did not). */
-  --terit-glass-bg: linear-gradient(160deg, rgba(255, 255, 255, 0.97) 0%, rgba(252, 250, 246, 0.95) 100%);
-  --terit-glass-sub-bg: #F6F3EC;
-  --terit-glass-border: 1px solid rgba(17, 22, 37, 0.11);
+  --terit-glass-bg: linear-gradient(160deg, #FFFFFF 0%, #FDFBF7 100%);
+  --terit-glass-sub-bg: #F4F0E7;
+  --terit-glass-border: 1px solid rgba(17, 22, 37, 0.14);
   --terit-glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.95);
-  --terit-glass-shadow: 0 16px 40px -10px rgba(17, 22, 37, 0.12), 0 3px 8px -1px rgba(17, 22, 37, 0.05);
+  --terit-glass-shadow: 0 14px 34px -12px rgba(17, 22, 37, 0.20), 0 2px 6px -1px rgba(17, 22, 37, 0.08);
   color-scheme: light;
 }
 
@@ -53,10 +53,11 @@
 @layer base {
   body {
     @apply transition-colors duration-200;
-    background-color: #EFEBE2;
+    background-color: #E6DFD0;
     background-image:
-      radial-gradient(1000px circle at 85% 90%, rgba(212, 91, 37, 0.05), transparent 52%),
-      linear-gradient(180deg, #F2EFE8 0%, #EAE5DA 100%);
+      radial-gradient(1100px circle at 12% 8%, rgba(255, 255, 255, 0.35), transparent 50%),
+      radial-gradient(1000px circle at 85% 90%, rgba(212, 91, 37, 0.07), transparent 52%),
+      linear-gradient(180deg, #EAE4D6 0%, #E2DAC8 100%);
     background-attachment: fixed;
     color: #111625;
     font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
@@ -133,10 +134,10 @@
   }
 
   .terit-modal {
-    background: #FFFFFF;
+    background: linear-gradient(160deg, rgba(234, 227, 210, 0.92) 0%, rgba(222, 215, 198, 0.88) 100%);
     backdrop-filter: blur(30px) saturate(185%);
     -webkit-backdrop-filter: blur(30px) saturate(185%);
-    border: 1px solid rgba(17, 22, 37, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.85);
     box-shadow: 0 30px 70px -15px rgba(17, 22, 37, 0.22), inset 0 1px 0 rgba(255, 255, 255, 1);
   }
 
@@ -376,3 +377,14 @@ html:not(.dark) .border-slate-200 { border-color: #d5d9e0; }
 html:not(.dark) .placeholder\:text-slate-400::placeholder,
 html:not(.dark) input::placeholder,
 html:not(.dark) textarea::placeholder { color: #6b7385; }
+
+/* Main page: body copy in full-strength ink; modals keep their frosted glass. */
+html:not(.dark) .text-slate-700 { color: #2b3242; }
+html:not(.dark) .text-slate-800 { color: #1c2230; }
+
+/* Inside modals (light mode), panels keep the original translucent frosted look. */
+html:not(.dark) .terit-modal {
+  --terit-glass-bg: linear-gradient(155deg, rgba(234, 227, 210, 0.85) 0%, rgba(255, 255, 255, 0.58) 100%);
+  --terit-glass-sub-bg: linear-gradient(155deg, rgba(234, 227, 210, 0.72) 0%, rgba(245, 240, 228, 0.52) 100%);
+  --terit-glass-border: 1px solid rgba(255, 255, 255, 0.75);
+}
