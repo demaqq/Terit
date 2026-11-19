@@ -75,8 +75,13 @@ service cloud.firestore {
           'quantity', 'minStockAlert', 'unitPrice', 'costPrice', 'unitOfMeasure',
           'location', 'locationId', 'supplierId', 'supplierName', 'status',
           'batchNumber', 'expiryDate', 'color', 'size', 'specs',
-          'isBundle', 'bundleComponents', 'costingMethod', 'createdAt', 'updatedAt'
+          'isBundle', 'bundleComponents', 'costingMethod', 'createdAt', 'updatedAt',
+          'isQuarantined', 'originalUnitPrice', 'discountPct', 'packSize'
         ])
+        && optBool(data, 'isQuarantined')
+        && optNumber(data, 'originalUnitPrice')
+        && (!('discountPct' in data) || (data.discountPct is number && data.discountPct >= 0 && data.discountPct <= 100))
+        && optNumber(data, 'packSize')
         && isValidId(data.id)
         && data.userId is string
         && data.userId == request.auth.uid

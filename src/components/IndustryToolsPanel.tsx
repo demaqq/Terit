@@ -55,6 +55,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
     businessType,
     companyProfile,
     quickAdjustStock,
+    updateItem,
     t,
   } = useInventory();
   const { toast } = useToast();
@@ -288,10 +289,18 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
     : 0;
 
   const handleToggleQuarantine = (batch: string) => {
-    if (quarantinedBatches.includes(batch)) {
-      setQuarantinedBatches((prev) => prev.filter((b) => b !== batch));
-    } else {
+    const nextQuarantined = !quarantinedBatches.includes(batch);
+    if (nextQuarantined) {
       setQuarantinedBatches((prev) => [...prev, batch]);
+    } else {
+      setQuarantinedBatches((prev) => prev.filter((b) => b !== batch));
+    }
+    // Persist on the item itself so the dispensing guard in QuickAdjustModal
+    // (which checks item.isQuarantined) actually blocks stock-out of this batch.
+    for (const item of items) {
+      if (item.batchNumber === batch) {
+        void updateItem(item.id, { isQuarantined: nextQuarantined }).catch(() => {});
+      }
     }
   };
 

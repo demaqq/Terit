@@ -268,7 +268,8 @@ Ask me in **English**, **አማርኛ**, **Afaan Oromoo**, **ትግርኛ**, or 
 
     // Filter out client-side welcome message to prevent English language bias
     const apiMessages = newHistory
-      .filter((m) => !m.id.startsWith('welcome'))
+      .filter((m) => !m.id.startsWith('welcome') && !m.id.startsWith('err-'))
+      .slice(-20)
       .map((m) => ({
         role: m.role,
         content: m.content,

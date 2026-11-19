@@ -475,7 +475,14 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const balances = new Map<string, StockBalance>();
     const getKey = (itemId: string, locationId: string) => `${itemId}|${locationId}`;
 
-    for (const entry of ledgerEntries) {
+    // Replay strictly in chronological order. ledgerEntries is kept newest-first for display,
+    // and the outbound branch clamps at zero, so replaying newest-first silently drops
+    // stock-outs that are processed before the inbound they consume.
+    const chronological = [...ledgerEntries].sort(
+      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
+
+    for (const entry of chronological) {
       // Destination (inbound)
       if (entry.destinationLocationId && entry.quantity > 0) {
         const key = getKey(entry.itemId, entry.destinationLocationId);
@@ -1409,53 +1416,11 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       return false;
     }
 
-    // If bundle, auto-deduct components
-    if (item.isBundle && item.bundleComponents) {
-      for (const comp of item.bundleComponents) {
-        const compQty = comp.quantity * quantity;
-        const compAvailable = getItemQuantityAtLocation(comp.itemId, locationId);
-        if (compAvailable < compQty) {
-          toast(`Insufficient component stock: ${comp.itemName} (need ${compQty}, have ${compAvailable})`, 'error');
-          return false;
-        }
-      }
-      // Deduct components
-      for (const comp of item.bundleComponents) {
-        await postLedgerEntry({
-          itemId: comp.itemId,
-          itemName: comp.itemName,
-          sku: comp.sku,
-          type: 'outbound',
-          quantity: comp.quantity * quantity,
-          sourceLocationId: locationId,
-          sourceLocationName: locations.find((l) => l.id === locationId)?.name || locationId,
-          destinationLocationId: undefined,
-          destinationLocationName: undefined,
-          unitCost: item.costPrice / item.bundleComponents.length,
-          totalCost: (item.costPrice / item.bundleComponents.length) * comp.quantity * quantity,
-          referenceType: 'sale',
-          referenceId,
-          reason: `Bundle component sale: ${item.name}`,
-        });
-      }
-      // Add bundle
-      await postLedgerEntry({
-        itemId,
-        itemName: item.name,
-        sku: item.sku,
-        type: 'inbound',
-        quantity,
-        sourceLocationId: undefined,
-        sourceLocationName: undefined,
-        destinationLocationId: locationId,
-        destinationLocationName: locations.find((l) => l.id === locationId)?.name || locationId,
-        unitCost: item.costPrice,
-        totalCost: item.costPrice * quantity,
-        referenceType: 'sale',
-        referenceId,
-        reason: reason || `Bundle sale: ${item.name}`,
-      });
-    } else {
+    // Bundles are sold from assembled bundle stock (components were already consumed
+    // by assembleBundle), so a sale is a plain outbound of the bundle SKU. Previously
+    // this deducted components AND posted an *inbound* of the bundle, so selling a
+    // bundle increased its stock.
+    {
       await postLedgerEntry({
         itemId,
         itemName: item.name,

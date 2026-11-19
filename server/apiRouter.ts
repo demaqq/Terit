@@ -4,7 +4,7 @@ import { ai } from './gemini.js';
 
 export const apiRouter = express.Router();
 
-apiRouter.use(express.json());
+apiRouter.use(express.json({ limit: '1mb' }));
 
 const BUSINESS_NICHE_GUIDANCE: Record<string, string> = {
   pharmacy:
@@ -33,6 +33,12 @@ apiRouter.post('/gemini/chat', async (req: Request, res: Response) => {
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: 'Messages array is required.' });
+    }
+    if (
+      messages.length > 50 ||
+      messages.some((m: unknown) => typeof (m as { content?: unknown })?.content !== 'string' || (m as { content: string }).content.length > 8000)
+    ) {
+      return res.status(400).json({ error: 'Conversation too long or malformed.' });
     }
 
     const modelName = modelMode === 'fast' ? 'gemini-3.1-flash-lite' : 'gemini-4-hydrogen';
@@ -97,7 +103,8 @@ Deliver actionable, mathematically sound, sector-specific operations leadership.
   } catch (error: any) {
     console.error('Error in /api/gemini/chat:', error);
     res.status(500).json({
-      error: error?.message || 'Failed to generate chat response',
+      // Don't forward raw upstream errors (they can expose project/key/config details).
+      error: 'Failed to generate chat response',
     });
   }
 });
@@ -136,7 +143,7 @@ Format cleanly with numbered sections and concise bullets.`;
   } catch (error: any) {
     console.error('Error in /api/gemini/audit-stock:', error);
     res.status(500).json({
-      error: error?.message || 'Failed to audit stock',
+      error: 'Failed to audit stock',
     });
   }
 });
