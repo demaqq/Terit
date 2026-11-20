@@ -13,8 +13,11 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
+import { ledgerDirection, newestFirst } from '../lib/ledger';
 import { IndustryToolsPanel } from './IndustryToolsPanel';
+import { BusinessInsightCard } from './BusinessInsightCard';
 import { InventoryItem } from '../types/inventory';
+import { fmt } from '../i18n/fmt';
 
 interface DashboardViewProps {
   onNavigate: (tab: string) => void;
@@ -36,6 +39,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     items,
     transactions,
     purchaseOrders,
+    companyProfile,
     t,
   } = useInventory();
 
@@ -45,11 +49,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const totalUnits = items.reduce((acc, i) => acc + i.quantity, 0);
   const lowStockItems = items.filter((i) => i.status === 'low_stock');
   const outOfStockItems = items.filter((i) => i.status === 'out_of_stock');
+  const attentionCount = lowStockItems.length + outOfStockItems.length;
   const pendingPOs = purchaseOrders.filter((p) => p.status === 'ordered' || p.status === 'draft');
   const grossProfitMargin = totalValuation > 0 ? ((totalValuation - totalCost) / totalValuation) * 100 : 0;
 
-  // Recent 6 transactions
-  const recentMovements = transactions.slice(0, 6);
+  // Six most recent movements, regardless of the order the ledger arrived in
+  const recentMovements = newestFirst(transactions).slice(0, 6);
 
   // Category distribution
   const categoryMap = items.reduce((acc: Record<string, { count: number; value: number }>, item) => {
@@ -66,7 +71,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   return (
     <div className="space-y-6">
       {/* Top Action Banner */}
-      <div className="relative overflow-hidden terit-glass rounded-3xl p-6 sm:p-7 flex items-center justify-end gap-5 transition-all">
+      <div className="relative overflow-hidden terit-glass rounded-3xl p-6 sm:p-7 flex flex-col lg:flex-row lg:items-center justify-between gap-5 transition-all">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute -top-24 -right-24 w-72 h-72 rounded-full bg-amber-400/20 dark:bg-amber-400/12 blur-3xl"
@@ -75,6 +80,29 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           aria-hidden="true"
           className="pointer-events-none absolute -bottom-24 left-12 w-64 h-64 rounded-full bg-sky-400/15 dark:bg-sky-400/10 blur-3xl"
         />
+
+        {/* Store heading + what needs attention today */}
+        <div className="relative z-10 min-w-0">
+          <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+            {new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}
+          </p>
+          <h1 className="mt-1 text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white truncate">
+            {companyProfile.companyName || t('nav_dashboard')}
+          </h1>
+          {attentionCount > 0 ? (
+            <button
+              type="button"
+              onClick={() => onNavigate('reorder')}
+              className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-rose-700 dark:text-rose-400 hover:underline cursor-pointer"
+            >
+              <AlertTriangle className="w-4 h-4" />
+              {t('dashboard_attention').replace('{count}', String(attentionCount))}
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          ) : (
+            <p className="mt-2 text-sm text-emerald-700 dark:text-emerald-400 font-semibold">{t('dashboard_all_good')}</p>
+          )}
+        </div>
 
         {/* Action Buttons */}
         <div className="relative z-10 flex flex-wrap items-center gap-2 shrink-0">
@@ -112,7 +140,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       {/* KPI Cards Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Retail Valuation */}
-        <div className="terit-glass rounded-2xl p-5 transition-all hover:-translate-y-0.5">
+        <div className="terit-glass terit-tint-emerald rounded-2xl p-5 transition-all hover:-translate-y-0.5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
               {t('retail_valuation')}
@@ -123,10 +151,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
           <div className="mt-3 text-xl sm:text-2xl font-bold text-slate-900 dark:text-white font-mono tabular-nums truncate">
             {totalValuation.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
-            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">ETB</span>
+            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">{t('currency_etb')}</span>
           </div>
           <div className="mt-1.5 flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400 truncate">
-            <span className="tabular-nums">{t('cost_label')}: {totalCost.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} ETB</span>
+            <span className="tabular-nums">{fmt(t('dashboard_etb'), [t('cost_label'), totalCost.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })])}</span>
             <span aria-hidden="true">·</span>
             <span className="text-emerald-700 dark:text-emerald-400 font-bold font-mono tabular-nums">
               {grossProfitMargin.toFixed(1)}% {t('margin_label')}
@@ -135,7 +163,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* Physical Units */}
-        <div className="terit-glass rounded-2xl p-5 transition-all hover:-translate-y-0.5">
+        <div className="terit-glass terit-tint-sky rounded-2xl p-5 transition-all hover:-translate-y-0.5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
               {t('physical_units')}
@@ -154,7 +182,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* Low Stock Alerts */}
-        <div className="terit-glass rounded-2xl p-5 transition-all hover:-translate-y-0.5">
+        <div className="terit-glass terit-tint-amber rounded-2xl p-5 transition-all hover:-translate-y-0.5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
               {t('low_stock_breaches')}
@@ -180,7 +208,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* Out of Stock & Pending POs */}
-        <div className="terit-glass rounded-2xl p-5 transition-all hover:-translate-y-0.5">
+        <div className="terit-glass terit-tint-rose rounded-2xl p-5 transition-all hover:-translate-y-0.5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
               {t('out_of_stock_kpi')}
@@ -204,6 +232,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       </div>
 
       {/* Customized Industry Operations & Custom Toolset */}
+      <BusinessInsightCard onNavigate={onNavigate} />
+
       <IndustryToolsPanel
         onOpenCreatePO={onOpenCreatePO}
         onOpenQuickAdjust={onOpenQuickAdjust}
@@ -310,8 +340,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       <div className="flex items-center gap-2 font-mono tabular-nums">
                         <span className="text-slate-600 dark:text-slate-400">{stats.count} {t('skus_short')}</span>
                         <span className="text-slate-900 dark:text-slate-100 font-bold">
-                          {stats.value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} ETB
-                        </span>
+                          {fmt(t('barcode_etb'), [stats.value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })])}</span>
                         <span className="text-amber-700 dark:text-amber-400 w-10 text-right font-bold">
                           {pct.toFixed(0)}%
                         </span>
@@ -338,7 +367,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 {t('recent_transactions')}
               </h3>
               <button
-                onClick={() => onNavigate('movements')}
+                onClick={() => onNavigate('ledger')}
                 className="text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white flex items-center gap-1 transition-colors cursor-pointer"
               >
                 <span>{t('full_log')}</span>
@@ -353,7 +382,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </div>
               ) : (
                 recentMovements.map((tx) => {
-                  const isInbound = tx.quantity > 0;
+                  const direction = ledgerDirection(tx);
+                  const isInbound = direction === 'in';
+                  const qtyLabel =
+                    direction === 'transfer' ? `⇄ ${Math.abs(tx.quantity)}` : direction === 'in' ? `+${Math.abs(tx.quantity)}` : `−${Math.abs(tx.quantity)}`;
+                  const placeLabel =
+                    direction === 'transfer'
+                      ? `${tx.sourceLocationName || ''} → ${tx.destinationLocationName || ''}`
+                      : direction === 'in'
+                        ? tx.destinationLocationName
+                        : tx.sourceLocationName;
                   return (
                     <div
                       key={tx.id}
@@ -376,15 +414,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       <div className="text-right shrink-0">
                         <span
                           className={`font-mono font-bold text-xs flex items-center justify-end gap-0.5 tabular-nums ${
-                            isInbound ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'
+                            direction === 'transfer'
+                              ? 'text-sky-700 dark:text-sky-400'
+                              : isInbound
+                                ? 'text-emerald-700 dark:text-emerald-400'
+                                : 'text-rose-700 dark:text-rose-400'
                           }`}
                         >
-                          {isInbound ? <ArrowDownLeft className="w-3 h-3" /> : <ArrowUpRight className="w-3 h-3" />}
-                          {isInbound ? `+${tx.quantity}` : tx.quantity}
+                          {direction === 'in' && <ArrowDownLeft className="w-3 h-3" />}
+                          {direction === 'out' && <ArrowUpRight className="w-3 h-3" />}
+                          {qtyLabel}
                         </span>
-                        <div className="text-[10px] text-slate-600 dark:text-slate-400 font-mono tabular-nums">
-                          {tx.previousQuantity ?? 0} &rarr; {tx.newQuantity ?? tx.quantity}
-                        </div>
+                        {placeLabel && (
+                          <div className="text-[10px] text-slate-600 dark:text-slate-400 max-w-[10rem] truncate">{placeLabel}</div>
+                        )}
                       </div>
                     </div>
                   );

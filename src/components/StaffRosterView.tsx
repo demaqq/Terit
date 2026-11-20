@@ -11,6 +11,7 @@ import {
 import { useInventory } from '../context/InventoryContext';
 import { StaffMember, StaffRole, AttendanceLog } from '../types/inventory';
 import { BUSINESS_PRESET_ATTENDANCE, BUSINESS_PRESET_STAFF } from '../data/businessPresets';
+import { fmt } from '../i18n/fmt';
 
 export const StaffRosterView: React.FC = () => {
   const { warehouses, businessType, t } = useInventory();
@@ -205,11 +206,11 @@ export const StaffRosterView: React.FC = () => {
           <div className="mt-2 text-xl sm:text-2xl font-black font-mono text-slate-900 dark:text-white truncate">
             {staffList.length}{' '}
             <span className="text-xs font-normal text-slate-500">
-              {t('members_count') || 'Members'}
+              {t('members_count')}
             </span>
           </div>
           <div className="mt-1 text-[10.5px] sm:text-[11px] text-blue-600 dark:text-blue-400 font-semibold truncate">
-            {t('across_all_branches') || 'Across all active branches'}
+            {t('across_all_branches')}
           </div>
         </div>
 
@@ -226,7 +227,7 @@ export const StaffRosterView: React.FC = () => {
             </span>
           </div>
           <div className="mt-1 text-[10.5px] sm:text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold truncate">
-            {t('clocked_in_counters') || 'Clocked-in at cash counters'}
+            {t('clocked_in_counters')}
           </div>
         </div>
 
@@ -241,7 +242,7 @@ export const StaffRosterView: React.FC = () => {
             title={`${totalMonthlyPayroll.toLocaleString()} ETB`}
           >
             {formatPayrollDisplay(totalMonthlyPayroll)}{' '}
-            <span className="text-xs font-normal text-slate-500 font-sans">ETB</span>
+            <span className="text-xs font-normal text-slate-500 font-sans">{t('currency_etb')}</span>
           </div>
           <div className="mt-1 text-[10.5px] sm:text-[11px] text-amber-600 dark:text-amber-400 font-semibold truncate">
             {pendingPayrollCount} {t('pending_payroll')}
@@ -251,14 +252,14 @@ export const StaffRosterView: React.FC = () => {
         {/* Card 4: Security & Roles */}
         <div className="min-w-0 terit-glass rounded-2xl p-4 sm:p-5 overflow-hidden flex flex-col justify-between">
           <div className="flex items-center justify-between text-xs text-slate-500">
-            <span className="truncate">{t('security_and_roles') || 'Security & Roles'}</span>
+            <span className="truncate">{t('security_and_roles')}</span>
             <Shield className="w-4 h-4 text-purple-500 shrink-0" />
           </div>
           <div className="mt-2 text-xl sm:text-2xl font-black font-mono text-purple-600 dark:text-purple-400 truncate">
-            5 <span className="text-xs font-normal text-slate-500">{t('roles_active_label') || 'Roles Active'}</span>
+            5 <span className="text-xs font-normal text-slate-500">{t('roles_active_label')}</span>
           </div>
           <div className="mt-1 text-[10.5px] sm:text-[11px] text-slate-500 truncate">
-            {t('rbac_access_control') || 'RBAC POS Access Control'}
+            {t('rbac_access_control')}
           </div>
         </div>
       </div>
@@ -282,13 +283,13 @@ export const StaffRosterView: React.FC = () => {
           <table className="w-full text-left border-collapse text-xs min-w-[620px]">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-950/60 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
-                <th className="py-3 px-4 font-bold">{t('emp_name') || 'Employee Name'}</th>
-                <th className="py-3 px-3 font-bold">{t('emp_role') || 'Assigned Role'}</th>
-                <th className="py-3 px-3 font-bold">{t('emp_branch') || 'Branch / Facility'}</th>
-                <th className="py-3 px-3 font-bold text-right">{t('monthly_salary_col') || 'Monthly Salary'}</th>
-                <th className="py-3 px-3 font-bold text-center">{t('shift_status_col') || 'Shift Status'}</th>
-                <th className="py-3 px-3 font-bold text-center">{t('payroll_status_col') || 'Payroll Status'}</th>
-                <th className="py-3 px-4 font-bold text-right">{t('actions') || 'Actions'}</th>
+                <th className="py-3 px-4 font-bold">{t('emp_name')}</th>
+                <th className="py-3 px-3 font-bold">{t('emp_role')}</th>
+                <th className="py-3 px-3 font-bold">{t('emp_branch')}</th>
+                <th className="py-3 px-3 font-bold text-right">{t('monthly_salary_col')}</th>
+                <th className="py-3 px-3 font-bold text-center">{t('shift_status_col')}</th>
+                <th className="py-3 px-3 font-bold text-center">{t('payroll_status_col')}</th>
+                <th className="py-3 px-4 font-bold text-right">{t('actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -305,8 +306,7 @@ export const StaffRosterView: React.FC = () => {
                   </td>
                   <td className="py-3 px-3 font-mono text-slate-600 dark:text-slate-400">{s.branch}</td>
                   <td className="py-3 px-3 font-mono text-right font-bold whitespace-nowrap">
-                    {(s.monthlySalary || 0).toLocaleString()} ETB
-                  </td>
+                    {fmt(t('barcode_etb'), [(s.monthlySalary || 0).toLocaleString()])}</td>
                   <td className="py-3 px-3 text-center whitespace-nowrap">
                     <span
                       className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full font-mono uppercase ${
@@ -327,7 +327,7 @@ export const StaffRosterView: React.FC = () => {
                           : 'bg-amber-500/10 text-amber-600 hover:bg-amber-500/20'
                       }`}
                     >
-                      {s.paymentStatus === 'paid' ? (t('paid_status') || 'Paid') : (t('pending_status') || 'Pending')}
+                      {s.paymentStatus === 'paid' ? (t('paid_status')) : (t('pending_status'))}
                     </button>
                   </td>
                   <td className="py-3 px-4 text-right whitespace-nowrap">
@@ -371,7 +371,7 @@ export const StaffRosterView: React.FC = () => {
             <form onSubmit={handleCreateStaff} className="space-y-3.5 text-xs">
               <div>
                 <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">
-                  {t('staff_name') || 'Full Name'} *
+                  {t('staff_name')} *
                 </label>
                 <input
                   type="text"
@@ -386,7 +386,7 @@ export const StaffRosterView: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">
-                    {t('staff_role') || 'Assigned Role'}
+                    {t('staff_role')}
                   </label>
                   <select
                     value={newRole}
@@ -475,7 +475,7 @@ export const StaffRosterView: React.FC = () => {
                   onClick={() => setIsAddStaffOpen(false)}
                   className="px-4 py-2 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 font-semibold cursor-pointer"
                 >
-                  {t('cancel_btn') || 'Cancel'}
+                  {t('cancel_btn')}
                 </button>
                 <button
                   type="submit"

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useCallback, useState, useMemo, ReactNode, useEffect } from 'react';
 import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
+import { translateStatic } from '../i18n/translations';
 
 type ToastType = 'success' | 'error' | 'info';
 
@@ -102,7 +103,7 @@ export const Toast: React.FC = () => {
                 remove(t.id);
               }}
               className="ml-2 shrink-0 opacity-60 hover:opacity-100 transition-opacity"
-              aria-label="Dismiss"
+              aria-label={translateStatic('toast_dismiss')}
             >
               <X className="w-3 h-3" />
             </button>

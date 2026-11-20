@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { PurchaseOrder } from '../types/inventory';
 import { useInventory } from '../context/InventoryContext';
+import { fmt } from '../i18n/fmt';
 
 interface PODetailsModalProps {
   isOpen: boolean;
@@ -68,22 +69,22 @@ export const PODetailsModal: React.FC<PODetailsModalProps> = ({
               </span>
               {po.status === 'draft' && (
                 <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700">
-                  {t('po_status_draft') || 'DRAFT'}
+                  {t('po_status_draft')}
                 </span>
               )}
               {po.status === 'ordered' && (
                 <span className="text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/30">
-                  {t('po_status_ordered') || 'ORDERED / IN TRANSIT'}
+                  {t('po_status_ordered')}
                 </span>
               )}
               {po.status === 'received' && (
                 <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/30">
-                  {t('po_status_received') || 'RECEIVED & RECONCILED'}
+                  {t('po_status_received')}
                 </span>
               )}
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              {t('vendor_supplier') || 'Vendor'}: <strong className="text-slate-900 dark:text-white">{po.supplierName}</strong>
+              {t('vendor_supplier')}: <strong className="text-slate-900 dark:text-white">{po.supplierName}</strong>
             </p>
           </div>
 
@@ -104,11 +105,11 @@ export const PODetailsModal: React.FC<PODetailsModalProps> = ({
           </div>
           <div>
             <span className="text-slate-500 text-[10px] sm:text-[11px] block font-medium">{t('po_details_expected_delivery')}</span>
-            <span className="font-mono font-semibold text-slate-800 dark:text-slate-200">{po.expectedDate || t('unspecified') || 'Unspecified'}</span>
+            <span className="font-mono font-semibold text-slate-800 dark:text-slate-200">{po.expectedDate || t('unspecified')}</span>
           </div>
           <div className="col-span-2 sm:col-span-1">
             <span className="text-slate-500 text-[10px] sm:text-[11px] block font-medium">{t('po_details_receipt_date')}</span>
-            <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">{po.receivedDate || t('pending_arrival') || 'Pending arrival'}</span>
+            <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">{po.receivedDate || t('pending_arrival')}</span>
           </div>
         </div>
 
@@ -139,11 +140,9 @@ export const PODetailsModal: React.FC<PODetailsModalProps> = ({
                         {line.quantity}
                       </td>
                       <td className="py-2 px-3 text-right font-mono text-slate-600 dark:text-slate-400">
-                        {line.unitCost.toFixed(2)} ETB
-                      </td>
+                        {fmt(t('barcode_etb'), [line.unitCost.toFixed(2)])}</td>
                       <td className="py-2 px-3 text-right font-mono font-bold text-amber-600 dark:text-amber-400">
-                        {line.totalCost.toFixed(2)} ETB
-                      </td>
+                        {fmt(t('barcode_etb'), [line.totalCost.toFixed(2)])}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -158,8 +157,7 @@ export const PODetailsModal: React.FC<PODetailsModalProps> = ({
             {t('po_details_grand_total')}
           </span>
           <span className="text-lg sm:text-xl font-bold font-mono text-slate-900 dark:text-white">
-            {po.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ETB
-          </span>
+            {fmt(t('barcode_etb'), [po.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })])}</span>
         </div>
 
         {/* Notes */}
@@ -296,7 +294,7 @@ export const PODetailsModal: React.FC<PODetailsModalProps> = ({
             onClick={onClose}
             className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors cursor-pointer"
           >
-            {justReceived ? t('close_btn') : (t('cancel_btn') || 'Close')}
+            {justReceived ? t('close_btn') : (t('cancel_btn'))}
           </button>
         </div>
       </div>

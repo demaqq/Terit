@@ -82,7 +82,11 @@ export function handleFirestoreError(
   }
 
   console.error('Firestore Error:', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
+  // Report instead of throwing: callers fire writes without awaiting them, and a throw
+  // here would surface as an unhandled rejection. InventoryContext shows a toast.
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('terit:cloud-error', { detail: errInfo }));
+  }
 }
 
 // Test connection on boot
@@ -98,7 +102,7 @@ export async function testFirestoreConnection() {
   }
 }
 
-testFirestoreConnection();
+// Not called at startup: it cost a network round-trip on every load just to log a message.
 
 export { signInWithPopup, signOut, onAuthStateChanged, getAdditionalUserInfo };
 export type { User };

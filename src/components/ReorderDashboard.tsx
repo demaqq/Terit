@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
 import { PurchaseOrder, ReorderRecommendation } from '../types/inventory';
+import { fmt } from '../i18n/fmt';
 
 const URGENCY_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   critical: { label: 'Critical', color: 'text-red-600 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800' },
@@ -342,7 +343,7 @@ export const ReorderDashboard: React.FC<ReorderDashboardProps> = ({
       )}
 
       {/* Summary KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <div className="min-w-0 terit-glass rounded-2xl p-4">
           <p className="text-xs text-slate-500 dark:text-slate-400 uppercase font-semibold mb-1">{t('reorder_items_needing')}</p>
           <p className={`text-2xl font-bold tabular-nums ${urgencyCounts.critical > 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-900 dark:text-white'}`}>
@@ -355,7 +356,7 @@ export const ReorderDashboard: React.FC<ReorderDashboardProps> = ({
         </div>
         <div className="min-w-0 terit-glass rounded-2xl p-4">
           <p className="text-xs text-slate-600 dark:text-slate-400 uppercase font-semibold mb-1">{t('reorder_estimated_cost')}</p>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">{totalEstimatedCost.toLocaleString()} ETB</p>
+          <p className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">{fmt(t('barcode_etb'), [totalEstimatedCost.toLocaleString()])}</p>
         </div>
         <div className="min-w-0 terit-glass rounded-2xl p-4">
           <p className="text-xs text-slate-500 dark:text-slate-400 uppercase font-semibold mb-1">{t('reorder_avg_lead_time')}</p>
@@ -469,7 +470,7 @@ export const ReorderDashboard: React.FC<ReorderDashboardProps> = ({
                     <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-300">{rec.leadTimeDays}</td>
                     <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-300">{rec.reorderPoint}</td>
                     <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-300 font-medium">{rec.recommendedOrderQuantity}</td>
-                    <td className="px-4 py-3 text-right text-slate-800 dark:text-slate-300 font-semibold tabular-nums">{rec.estimatedCost.toLocaleString()} ETB</td>
+                    <td className="px-4 py-3 text-right text-slate-800 dark:text-slate-300 font-semibold tabular-nums">{fmt(t('barcode_etb'), [rec.estimatedCost.toLocaleString()])}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${cfg.bg} ${cfg.color}`}>
                         {t(`reorder_urgency_${rec.urgency}`)}

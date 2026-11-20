@@ -8,6 +8,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
+import { fmt } from '../i18n/fmt';
 
 interface WarehousesViewProps {
   onOpenAddWarehouse: () => void;
@@ -105,8 +106,8 @@ export const WarehousesView: React.FC<WarehousesViewProps> = ({
       {warehouses.length === 0 ? (
         <div className="text-center py-16 text-slate-500 dark:text-slate-400">
           <div className="text-4xl mb-3">🏭</div>
-          <div className="font-semibold">{t('warehouses_empty') || 'No warehouses yet.'}</div>
-          <div className="text-xs mt-1">{t('warehouses_empty_desc') || 'Add your first warehouse to start tracking stock locations.'}</div>
+          <div className="font-semibold">{t('warehouses_empty')}</div>
+          <div className="text-xs mt-1">{t('warehouses_empty_desc')}</div>
         </div>
       ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -159,8 +160,7 @@ export const WarehousesView: React.FC<WarehousesViewProps> = ({
                 <div>
                   <div className="text-slate-500 dark:text-slate-400 text-[11px]">{t('warehouses_stock_valuation')}</div>
                   <div className="font-mono font-bold text-amber-700 dark:text-amber-400 text-base mt-0.5">
-                    {totalValuation.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} ETB
-                  </div>
+                    {fmt(t('barcode_etb'), [totalValuation.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })])}</div>
                 </div>
               </div>
 

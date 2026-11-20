@@ -10,6 +10,7 @@ import {
 import QRCode from 'qrcode';
 import { InventoryItem } from '../types/inventory';
 import { useInventory } from '../context/InventoryContext';
+import { fmt } from '../i18n/fmt';
 
 interface BarcodeModalProps {
   isOpen: boolean;
@@ -142,7 +143,7 @@ export const BarcodeModal: React.FC<BarcodeModalProps> = ({ isOpen, onClose, ite
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
-                  {tMode === 'dual' ? (t('barcode_mode_dual')||'Dual') : tMode === 'qrcode' ? (t('barcode_mode_qr')||'2D QR') : (t('barcode_mode_1d')||'1D Barcode')}
+                  {tMode === 'dual' ? (t('barcode_mode_dual')) : tMode === 'qrcode' ? (t('barcode_mode_qr')) : (t('barcode_mode_1d'))}
                 </button>
               ))}
             </div>
@@ -158,8 +159,8 @@ export const BarcodeModal: React.FC<BarcodeModalProps> = ({ isOpen, onClose, ite
               className="w-full p-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-[11px] text-slate-900 dark:text-slate-100"
             >
               <option value="json">{t('barcode_qr_json')}</option>
-              <option value="sku">{(t('barcode_qr_sku_only')||'SKU Code Only')} ({activeSku})</option>
-              <option value="link">{t('barcode_qr_link')||'Web Scan Link (app.terit.et)'}</option>
+              <option value="sku">{(t('barcode_qr_sku_only'))} ({activeSku})</option>
+              <option value="link">{t('barcode_qr_link')}</option>
               <option value="custom">{t('barcode_qr_custom')}</option>
             </select>
           </div>
@@ -197,8 +198,7 @@ export const BarcodeModal: React.FC<BarcodeModalProps> = ({ isOpen, onClose, ite
             </div>
             <div className="text-right">
               <div className="text-base font-black font-mono text-slate-900">
-                {activePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ETB
-              </div>
+                {fmt(t('barcode_etb'), [activePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })])}</div>
               <div className="text-[9px] text-slate-500 font-mono">
                 {t('barcode_price_unit').replace('{unit}', activeUnit)}
               </div>
@@ -211,11 +211,11 @@ export const BarcodeModal: React.FC<BarcodeModalProps> = ({ isOpen, onClose, ite
             {(codeType === 'qrcode' || codeType === 'dual') && (
               <div className="flex flex-col items-center justify-center p-2 rounded-xl bg-slate-50 border border-slate-200">
                 {qrDataUrl ? (
-                  <img src={qrDataUrl} alt={t('barcode_mode_qr') || '2D QR Code'} className="w-24 h-24 object-contain rounded-lg" />
+                  <img src={qrDataUrl} alt={t('barcode_mode_qr')} className="w-24 h-24 object-contain rounded-lg" />
                 ) : (
-                  <div className="w-24 h-24 flex items-center justify-center text-slate-400">{t('loading')||'Loading...'}</div>
+                  <div className="w-24 h-24 flex items-center justify-center text-slate-400">{t('loading')}</div>
                 )}
-                <span className="text-[9px] font-mono text-slate-500 mt-1 font-bold">{t('barcode_quick_scan')||'2D QUICK-SCAN'}</span>
+                <span className="text-[9px] font-mono text-slate-500 mt-1 font-bold">{t('barcode_quick_scan')}</span>
               </div>
             )}
 
@@ -245,17 +245,17 @@ export const BarcodeModal: React.FC<BarcodeModalProps> = ({ isOpen, onClose, ite
           {/* Item Meta Specs */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px] text-slate-600 font-mono border-t border-slate-200 pt-2">
             <div>
-              <span className="text-slate-400">{t('sku_short')||'SKU'}:</span> <strong className="text-slate-900">{activeSku}</strong>
+              <span className="text-slate-400">{t('sku_short')}:</span> <strong className="text-slate-900">{activeSku}</strong>
             </div>
             <div>
-              <span className="text-slate-400">{t('bin_short')||'BIN'}:</span> <strong className="text-slate-900">{activeLocation}</strong>
+              <span className="text-slate-400">{t('bin_short')}:</span> <strong className="text-slate-900">{activeLocation}</strong>
             </div>
             <div>
-              <span className="text-slate-400">{t('lot_short')||'LOT'}:</span> <strong className="text-slate-900">{activeBatch}</strong>
+              <span className="text-slate-400">{t('lot_short')}:</span> <strong className="text-slate-900">{activeBatch}</strong>
             </div>
             <div className="text-right">
-              <span className="text-slate-400">{t('exp_short') || 'EXP'}:</span>{' '}
-              <strong className="text-rose-600">{activeExpiry || t('not_available_short') || 'N/A'}</strong>
+              <span className="text-slate-400">{t('exp_short')}:</span>{' '}
+              <strong className="text-rose-600">{activeExpiry || t('not_available_short')}</strong>
             </div>
           </div>
         </div>

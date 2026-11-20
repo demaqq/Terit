@@ -14,9 +14,11 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
+import { ledgerDirection } from '../lib/ledger';
 import { LedgerEntryType } from '../types/inventory';
 import { escapeHtml, printHtmlDocument } from '../lib/posHardware';
 import { useToast } from './Toast';
+import { fmt } from '../i18n/fmt';
 
 const LEDGER_TYPE_CONFIG: Record<LedgerEntryType, { labelKey: string; icon: React.FC<any>; color: string }> = {
   purchase: { labelKey: 'ledger_filter_purchase', icon: Receipt, color: 'border-blue-200 bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800' },
@@ -71,12 +73,13 @@ export const LedgerView: React.FC = () => {
   }, [transactions, searchTerm, typeFilter, sortDirection]);
 
   const summary = useMemo(() => {
+    // Transfers move stock between locations, so they count as neither in nor out.
     const inboundQty = filteredEntries
-      .filter((e) => e.quantity > 0 && (e.destinationLocationId || e.type === 'inbound' || e.type === 'purchase' || e.type === 'initial'))
-      .reduce((sum, e) => sum + e.quantity, 0);
+      .filter((e) => ledgerDirection(e) === 'in')
+      .reduce((sum, e) => sum + Math.abs(e.quantity), 0);
     const outboundQty = filteredEntries
-      .filter((e) => e.quantity > 0 && (e.sourceLocationId || e.type === 'outbound' || e.type === 'sale' || e.type === 'transfer'))
-      .reduce((sum, e) => sum + e.quantity, 0);
+      .filter((e) => ledgerDirection(e) === 'out')
+      .reduce((sum, e) => sum + Math.abs(e.quantity), 0);
     const totalValue = filteredEntries.reduce((sum, e) => sum + (e.totalCost ?? 0), 0);
     return { inboundQty, outboundQty, totalValue };
   }, [filteredEntries]);
@@ -205,7 +208,7 @@ export const LedgerView: React.FC = () => {
         <div className="min-w-0 terit-glass rounded-2xl p-4">
           <p className="text-xs text-slate-500 dark:text-slate-400 uppercase font-semibold mb-1">{t('ledger_kpi_total_value')}</p>
           <p className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">
-            {summary.totalValue.toLocaleString()} <span className="text-xs font-semibold text-slate-500">ETB</span>
+            {summary.totalValue.toLocaleString()} <span className="text-xs font-semibold text-slate-500">{t('currency_etb')}</span>
           </p>
         </div>
         <div className="min-w-0 terit-glass rounded-2xl p-4">
@@ -308,8 +311,7 @@ export const LedgerView: React.FC = () => {
                         {entry.destinationLocationName || '-'}
                       </td>
                       <td className="px-4 py-3 text-right font-medium text-slate-700 dark:text-slate-300 font-mono text-xs">
-                        {(entry.totalCost ?? 0).toLocaleString()} ETB
-                      </td>
+                        {fmt(t('barcode_etb'), [(entry.totalCost ?? 0).toLocaleString()])}</td>
                       <td className="px-4 py-3">
                         <span
                           className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${

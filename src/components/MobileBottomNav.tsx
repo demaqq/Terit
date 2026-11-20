@@ -22,6 +22,7 @@ import {
   Crown,
 } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
+import { MORE_MENU_ITEMS } from '../navigation';
 import { SupportedLanguage } from '../i18n/translations';
 
 interface MobileBottomNavProps {
@@ -55,6 +56,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
     businessType,
     tier,
     t,
+    profile,
   } = useInventory();
 
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
@@ -151,79 +153,23 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
               </button>
             </div>
 
-            {/* Navigation Links Grid */}
+            {/* Navigation Links Grid: every screen not in the bottom bar */}
             <div className="grid grid-cols-2 gap-2 text-xs">
-              <button
-                onClick={() => handleTabClick('credit')}
-                className={`p-3 rounded-2xl border text-left flex items-center gap-2.5 transition-colors ${
-                  activeTab === 'credit'
-                    ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-500 text-amber-600 dark:text-amber-400 font-bold'
-                    : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
-                }`}
-              >
-                <CreditCard className="w-4 h-4 text-amber-500" />
-                <span>{t('nav_credit')}</span>
-              </button>
-
-              <button
-                onClick={() => handleTabClick('staff')}
-                className={`p-3 rounded-2xl border text-left flex items-center gap-2.5 transition-colors ${
-                  activeTab === 'staff'
-                    ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-500 text-amber-600 dark:text-amber-400 font-bold'
-                    : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
-                }`}
-              >
-                <Users className="w-4 h-4 text-blue-500" />
-                <span>{t('nav_staff')}</span>
-              </button>
-
-              <button
-                onClick={() => handleTabClick('procurement')}
-                className={`p-3 rounded-2xl border text-left flex items-center gap-2.5 transition-colors ${
-                  activeTab === 'procurement'
-                    ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-500 text-amber-600 dark:text-amber-400 font-bold'
-                    : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
-                }`}
-              >
-                <ShoppingCart className="w-4 h-4 text-purple-500" />
-                <span>{t('nav_pos')}</span>
-              </button>
-
-              <button
-                onClick={() => handleTabClick('movements')}
-                className={`p-3 rounded-2xl border text-left flex items-center gap-2.5 transition-colors ${
-                  activeTab === 'movements'
-                    ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-500 text-amber-600 dark:text-amber-400 font-bold'
-                    : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
-                }`}
-              >
-                <ArrowRightLeft className="w-4 h-4 text-emerald-500" />
-                <span>{t('nav_movements')}</span>
-              </button>
-
-              <button
-                onClick={() => handleTabClick('suppliers')}
-                className={`p-3 rounded-2xl border text-left flex items-center gap-2.5 transition-colors ${
-                  activeTab === 'suppliers'
-                    ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-500 text-amber-600 dark:text-amber-400 font-bold'
-                    : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
-                }`}
-              >
-                <Building2 className="w-4 h-4 text-indigo-500" />
-                <span>{t('nav_suppliers')}</span>
-              </button>
-
-              <button
-                onClick={() => handleTabClick('warehouses')}
-                className={`p-3 rounded-2xl border text-left flex items-center gap-2.5 transition-colors ${
-                  activeTab === 'warehouses'
-                    ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-500 text-amber-600 dark:text-amber-400 font-bold'
-                    : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
-                }`}
-              >
-                <Warehouse className="w-4 h-4 text-rose-500" />
-                <span>{t('nav_warehouses')}</span>
-              </button>
+              {MORE_MENU_ITEMS.filter((m) => !profile.hiddenScreens.includes(m.id)).map(({ id, labelKey, Icon, iconClass }) => (
+                <button
+                  key={id}
+                  onClick={() => handleTabClick(id)}
+                  aria-current={activeTab === id ? 'page' : undefined}
+                  className={`p-3 rounded-2xl border text-left flex items-center gap-2.5 transition-colors cursor-pointer ${
+                    activeTab === id
+                      ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-500 text-amber-600 dark:text-amber-400 font-bold'
+                      : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
+                  }`}
+                >
+                  <Icon className={`w-4 h-4 shrink-0 ${iconClass}`} />
+                  <span className="truncate">{t(labelKey)}</span>
+                </button>
+              ))}
             </div>
 
             <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3">
@@ -404,7 +350,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         <button
           onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
           className={`flex-1 flex flex-col items-center justify-center py-1 px-0.5 rounded-xl transition-all cursor-pointer ${
-            isMoreMenuOpen || ['staff', 'procurement', 'movements', 'suppliers', 'warehouses'].includes(activeTab)
+            isMoreMenuOpen || MORE_MENU_ITEMS.some((m) => m.id === activeTab)
               ? 'text-amber-700 dark:text-amber-400 font-bold'
               : 'text-slate-700 dark:text-slate-300'
           }`}

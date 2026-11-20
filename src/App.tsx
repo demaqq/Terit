@@ -1,38 +1,49 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { InventoryProvider, useInventory } from './context/InventoryContext';
+import { translateStatic } from './i18n/translations';
 import { Navbar } from './components/Navbar';
 import { ToastProvider, Toast, useToast } from './components/Toast';
 import { MobileBottomNav } from './components/MobileBottomNav';
-import { AddItemModal } from './components/AddItemModal';
-import { QuickAdjustModal } from './components/QuickAdjustModal';
-import { BarcodeModal } from './components/BarcodeModal';
-import { CreatePOModal } from './components/CreatePOModal';
-import { TransferStockModal } from './components/TransferStockModal';
-import { ItemDetailsModal } from './components/ItemDetailsModal';
-import { AddSupplierModal } from './components/AddSupplierModal';
-import { AddWarehouseModal } from './components/AddWarehouseModal';
-import { PODetailsModal } from './components/PODetailsModal';
-import { PricingModal } from './components/PricingModal';
-import { OnboardingModal } from './components/OnboardingModal';
-import { AlertsModal } from './components/AlertsModal';
-import { ColdChainModal } from './components/ColdChainModal';
-import { EveningMarkdownModal } from './components/EveningMarkdownModal';
-import { LandedCostModal } from './components/LandedCostModal';
-import { MobileSyncModal } from './components/MobileSyncModal';
-import { ETRReceiptModal } from './components/ETRReceiptModal';
 import { AuthGateView } from './components/AuthGateView';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { BarcodeScannerListener } from './lib/posHardware';
 import { InventoryItem, Supplier, PurchaseOrder } from './types/inventory';
 import { BotMessageSquare, Boxes, Sparkles, Thermometer, Tag, Ship } from 'lucide-react';
 
+// Popups load on first open (and the common ones are prefetched when the page is idle).
+const AddItemModal = lazy(() => import('./components/AddItemModal').then((m) => ({ default: m.AddItemModal })));
+const QuickAdjustModal = lazy(() => import('./components/QuickAdjustModal').then((m) => ({ default: m.QuickAdjustModal })));
+const BarcodeModal = lazy(() => import('./components/BarcodeModal').then((m) => ({ default: m.BarcodeModal })));
+const CreatePOModal = lazy(() => import('./components/CreatePOModal').then((m) => ({ default: m.CreatePOModal })));
+const TransferStockModal = lazy(() => import('./components/TransferStockModal').then((m) => ({ default: m.TransferStockModal })));
+const ItemDetailsModal = lazy(() => import('./components/ItemDetailsModal').then((m) => ({ default: m.ItemDetailsModal })));
+const AddSupplierModal = lazy(() => import('./components/AddSupplierModal').then((m) => ({ default: m.AddSupplierModal })));
+const AddWarehouseModal = lazy(() => import('./components/AddWarehouseModal').then((m) => ({ default: m.AddWarehouseModal })));
+const PODetailsModal = lazy(() => import('./components/PODetailsModal').then((m) => ({ default: m.PODetailsModal })));
+const PricingModal = lazy(() => import('./components/PricingModal').then((m) => ({ default: m.PricingModal })));
+const OnboardingModal = lazy(() => import('./components/OnboardingModal').then((m) => ({ default: m.OnboardingModal })));
+const AlertsModal = lazy(() => import('./components/AlertsModal').then((m) => ({ default: m.AlertsModal })));
+const ColdChainModal = lazy(() => import('./components/ColdChainModal').then((m) => ({ default: m.ColdChainModal })));
+const EveningMarkdownModal = lazy(() => import('./components/EveningMarkdownModal').then((m) => ({ default: m.EveningMarkdownModal })));
+const LandedCostModal = lazy(() => import('./components/LandedCostModal').then((m) => ({ default: m.LandedCostModal })));
+const MobileSyncModal = lazy(() => import('./components/MobileSyncModal').then((m) => ({ default: m.MobileSyncModal })));
+const ETRReceiptModal = lazy(() => import('./components/ETRReceiptModal').then((m) => ({ default: m.ETRReceiptModal })));
+
+// After the first screen is up, quietly fetch what people open most, so it opens instantly.
+const prefetchCommonScreens = () => {
+  void import('./components/InventoryView');
+  void import('./components/AddItemModal');
+  void import('./components/QuickAdjustModal');
+  void import('./components/ItemDetailsModal');
+};
+
 const DashboardView = lazy(() => import('./components/DashboardView').then((m) => ({ default: m.DashboardView })));
 const InventoryView = lazy(() => import('./components/InventoryView').then((m) => ({ default: m.InventoryView })));
-const MovementsView = lazy(() => import('./components/MovementsView').then((m) => ({ default: m.MovementsView })));
 const PurchaseOrdersView = lazy(() => import('./components/PurchaseOrdersView').then((m) => ({ default: m.PurchaseOrdersView })));
 const SuppliersView = lazy(() => import('./components/SuppliersView').then((m) => ({ default: m.SuppliersView })));
 const WarehousesView = lazy(() => import('./components/WarehousesView').then((m) => ({ default: m.WarehousesView })));
 const ReportsView = lazy(() => import('./components/ReportsView').then((m) => ({ default: m.ReportsView })));
+const CatalogView = lazy(() => import('./components/CatalogView').then((m) => ({ default: m.CatalogView })));
 const CreditLedgerView = lazy(() => import('./components/CreditLedgerView').then((m) => ({ default: m.CreditLedgerView })));
 const StaffRosterView = lazy(() => import('./components/StaffRosterView').then((m) => ({ default: m.StaffRosterView })));
 const LedgerView = lazy(() => import('./components/LedgerView').then((m) => ({ default: m.LedgerView })));
@@ -46,7 +57,7 @@ const SkeletonBlock: React.FC<{ className?: string }> = ({ className = '' }) => 
 );
 
 const ViewFallback = () => (
-  <div className="space-y-6 animate-in fade-in duration-300" aria-busy="true" aria-label="Loading">
+  <div className="space-y-6 animate-in fade-in duration-300" aria-busy="true" aria-label={translateStatic('loading_label')}>
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div className="space-y-2">
         <SkeletonBlock className="h-7 w-56" />
@@ -96,6 +107,14 @@ const ViewFallback = () => (
 );
 
 function AppContent() {
+  useEffect(() => {
+    const w = window as Window & { requestIdleCallback?: (cb: () => void) => number };
+    const id = w.requestIdleCallback ? w.requestIdleCallback(prefetchCommonScreens) : window.setTimeout(prefetchCommonScreens, 2000);
+    return () => {
+      if (!w.requestIdleCallback) window.clearTimeout(id);
+    };
+  }, []);
+
   const { user, authLoading, isGuestMode, hasCompletedOnboarding, items, purchaseOrders, businessType, t } = useInventory();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<string>('dashboard');
@@ -278,7 +297,7 @@ function AppContent() {
 
       {/* Main Content Area */}
       <main className="flex-1 w-full min-w-0">
-        <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 lg:pb-8">
+        <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 lg:pb-28">
           <Suspense fallback={<ViewFallback />}>
             {activeTab === 'dashboard' && (
               <DashboardView
@@ -299,10 +318,13 @@ function AppContent() {
                 onOpenBarcode={handleOpenBarcode}
                 onViewItemDetails={handleViewItemDetails}
                 onOpenPricing={() => setIsPricingOpen(true)}
+                onOpenCatalog={() => setActiveTab('catalog')}
               />
             )}
 
             {activeTab === 'credit' && <CreditLedgerView />}
+
+            {activeTab === 'catalog' && <CatalogView onOpenAddItem={handleOpenAddItem} />}
 
             {activeTab === 'staff' && <StaffRosterView />}
 
@@ -313,7 +335,6 @@ function AppContent() {
               />
             )}
 
-            {activeTab === 'movements' && <MovementsView />}
 
             {activeTab === 'procurement' && (
               <PurchaseOrdersView
@@ -339,7 +360,7 @@ function AppContent() {
               />
             )}
 
-            {activeTab === 'ledger' && <LedgerView />}
+            {(activeTab === 'ledger' || activeTab === 'movements') && <LedgerView />}
 
             {activeTab === 'bundles' && <BundleBuilder />}
 
@@ -372,7 +393,7 @@ function AppContent() {
         <button
           onClick={() => setIsColdChainOpen(true)}
           className="hidden lg:flex fixed bottom-24 right-6 z-30 p-3 rounded-full bg-sky-500 text-white font-bold shadow-xl shadow-sky-500/20 hover:scale-105 transition-all items-center gap-2 cursor-pointer"
-          title={t('coldchain_title') || 'Cold-Chain Temperature Log'}
+          title={t('coldchain_title')}
         >
           <Thermometer className="w-4 h-4" />
         </button>
@@ -383,7 +404,7 @@ function AppContent() {
         <button
           onClick={() => setIsMarkdownOpen(true)}
           className="hidden lg:flex fixed bottom-24 right-6 z-30 p-3 rounded-full bg-amber-500 text-slate-950 font-bold shadow-xl shadow-amber-500/20 hover:scale-105 transition-all items-center gap-2 cursor-pointer"
-          title={t('markdown_title') || 'Evening Markdown'}
+          title={t('markdown_title')}
         >
           <Tag className="w-4 h-4" />
         </button>
@@ -394,7 +415,7 @@ function AppContent() {
         <button
           onClick={() => setIsLandedCostOpen(true)}
           className="hidden lg:flex fixed bottom-24 right-6 z-30 p-3 rounded-full bg-indigo-500 text-white font-bold shadow-xl shadow-indigo-500/20 hover:scale-105 transition-all items-center gap-2 cursor-pointer"
-          title={t('landed_title') || 'Landed Cost Calculator'}
+          title={t('landed_title')}
         >
           <Ship className="w-4 h-4" />
         </button>
@@ -402,7 +423,7 @@ function AppContent() {
 
       {/* Footer */}
       <footer className="border-t border-slate-900/10 dark:border-white/10 bg-white/70 dark:bg-slate-950/60 backdrop-blur-2xl py-4 text-center text-xs text-slate-700 dark:text-slate-300 mb-14 lg:mb-0">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div className="max-w-7xl mx-auto px-4 lg:pr-52 flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="font-medium">{t('app_name')} · {t('footer_tagline')}</div>
           <div className="flex items-center gap-4 text-slate-600 dark:text-slate-400">
             <span>{t('footer_sync_label')}</span>
@@ -424,11 +445,15 @@ function AppContent() {
       />
 
       {/* Onboarding & Business Type Modal */}
-      <OnboardingModal
-        isOpen={isOnboardingOpen}
-        onClose={() => setIsOnboardingOpen(false)}
-        allowDismiss={hasCompletedOnboarding}
-      />
+      {isOnboardingOpen && (
+        <Suspense fallback={null}>
+          <OnboardingModal
+            isOpen={isOnboardingOpen}
+            onClose={() => setIsOnboardingOpen(false)}
+            allowDismiss={hasCompletedOnboarding}
+          />
+        </Suspense>
+      )}
 
       {/* AI Copilot Drawer */}
       {isChatOpen && (
@@ -438,95 +463,165 @@ function AppContent() {
       )}
 
       {/* Pricing / Plan Modal */}
-      <PricingModal isOpen={isPricingOpen} onClose={() => setIsPricingOpen(false)} />
+      {isPricingOpen && (
+        <Suspense fallback={null}>
+          <PricingModal
+            isOpen={isPricingOpen} onClose={() => setIsPricingOpen(false)} />
+            </Suspense>
+            )}
 
-      {/* SMS & Email Alerts Sentinel Modal */}
-      <AlertsModal isOpen={isAlertsOpen} onClose={() => setIsAlertsOpen(false)} />
-      <ColdChainModal isOpen={isColdChainOpen} onClose={() => setIsColdChainOpen(false)} />
-      <EveningMarkdownModal isOpen={isMarkdownOpen} onClose={() => setIsMarkdownOpen(false)} />
-      <LandedCostModal isOpen={isLandedCostOpen} onClose={() => setIsLandedCostOpen(false)} />
+            {/* SMS & Email Alerts Sentinel Modal */}
+            {isAlertsOpen && (
+            <Suspense fallback={null}>
+            <AlertsModal
+            isOpen={isAlertsOpen} onClose={() => setIsAlertsOpen(false)} />
+            </Suspense>
+            )}
+            {isColdChainOpen && (
+            <Suspense fallback={null}>
+            <ColdChainModal
+            isOpen={isColdChainOpen} onClose={() => setIsColdChainOpen(false)} />
+            </Suspense>
+            )}
+            {isMarkdownOpen && (
+            <Suspense fallback={null}>
+            <EveningMarkdownModal
+            isOpen={isMarkdownOpen} onClose={() => setIsMarkdownOpen(false)} />
+            </Suspense>
+            )}
+            {isLandedCostOpen && (
+            <Suspense fallback={null}>
+            <LandedCostModal
+            isOpen={isLandedCostOpen} onClose={() => setIsLandedCostOpen(false)} />
+            </Suspense>
+            )}
 
-      {/* Android Mobile App Sync Guide Modal */}
-      <MobileSyncModal isOpen={isSyncGuideOpen} onClose={() => setIsSyncGuideOpen(false)} />
+            {/* Android Mobile App Sync Guide Modal */}
+            {isSyncGuideOpen && (
+            <Suspense fallback={null}>
+            <MobileSyncModal
+            isOpen={isSyncGuideOpen} onClose={() => setIsSyncGuideOpen(false)} />
+            </Suspense>
+            )}
 
-      {/* Add / Edit Item Modal (with Smart SKU Generator) */}
-      <AddItemModal
-        isOpen={isAddItemOpen}
-        onClose={() => setIsAddItemOpen(false)}
-        editingItem={editingItem}
-      />
+            {/* Add / Edit Item Modal (with Smart SKU Generator) */}
+            {isAddItemOpen && (
+            <Suspense fallback={null}>
+            <AddItemModal
+            isOpen={isAddItemOpen}
+            onClose={() => setIsAddItemOpen(false)}
+            editingItem={editingItem}
+          />
+        </Suspense>
+      )}
 
       {/* Quick Adjust In/Out Modal */}
-      <QuickAdjustModal
-        isOpen={isQuickAdjustOpen}
-        onClose={() => setIsQuickAdjustOpen(false)}
-        targetItemId={adjustTargetItemId}
-      />
+      {isQuickAdjustOpen && (
+        <Suspense fallback={null}>
+          <QuickAdjustModal
+            isOpen={isQuickAdjustOpen}
+            onClose={() => setIsQuickAdjustOpen(false)}
+            targetItemId={adjustTargetItemId}
+          />
+        </Suspense>
+      )}
 
       {/* QR & Barcode Generator Modal */}
-      <BarcodeModal
-        isOpen={isBarcodeOpen}
-        onClose={() => setIsBarcodeOpen(false)}
-        item={barcodeTargetItem}
-      />
+      {isBarcodeOpen && (
+        <Suspense fallback={null}>
+          <BarcodeModal
+            isOpen={isBarcodeOpen}
+            onClose={() => setIsBarcodeOpen(false)}
+            item={barcodeTargetItem}
+          />
+        </Suspense>
+      )}
 
       {/* Create PO Modal */}
-      <CreatePOModal
-        isOpen={isCreatePOOpen}
-        onClose={() => setIsCreatePOOpen(false)}
-        preselectedSupplierId={poPreselectedSupplier}
-        preselectedItemId={poPreselectedItem}
-      />
+      {isCreatePOOpen && (
+        <Suspense fallback={null}>
+          <CreatePOModal
+            isOpen={isCreatePOOpen}
+            onClose={() => setIsCreatePOOpen(false)}
+            preselectedSupplierId={poPreselectedSupplier}
+            preselectedItemId={poPreselectedItem}
+          />
+        </Suspense>
+      )}
 
       {/* PO Details Modal */}
-      <PODetailsModal
-        isOpen={isPODetailsOpen}
-        onClose={() => setIsPODetailsOpen(false)}
-        po={selectedPO ? (purchaseOrders.find((p) => p.id === selectedPO.id) ?? selectedPO) : null}
-        onNavigate={setActiveTab}
-      />
+      {isPODetailsOpen && (
+        <Suspense fallback={null}>
+          <PODetailsModal
+            isOpen={isPODetailsOpen}
+            onClose={() => setIsPODetailsOpen(false)}
+            po={selectedPO ? (purchaseOrders.find((p) => p.id === selectedPO.id) ?? selectedPO) : null}
+            onNavigate={setActiveTab}
+          />
+        </Suspense>
+      )}
 
       {/* Transfer Stock Modal */}
-      <TransferStockModal
-        isOpen={isTransferOpen}
-        onClose={() => setIsTransferOpen(false)}
-        defaultWarehouse={transferDefaultWarehouse}
-      />
+      {isTransferOpen && (
+        <Suspense fallback={null}>
+          <TransferStockModal
+            isOpen={isTransferOpen}
+            onClose={() => setIsTransferOpen(false)}
+            defaultWarehouse={transferDefaultWarehouse}
+          />
+        </Suspense>
+      )}
 
       {/* Item Details View Modal */}
-      <ItemDetailsModal
-        isOpen={isItemDetailsOpen}
-        onClose={() => setIsItemDetailsOpen(false)}
-        item={selectedItem}
-        onOpenEdit={handleOpenEditItem}
-        onOpenQuickAdjust={handleOpenQuickAdjust}
-        onOpenBarcode={handleOpenBarcode}
-        onOpenETR={(item) => {
-          setIsItemDetailsOpen(false);
-          setEtrItem(item);
-          setIsETROpen(true);
-        }}
-      />
+      {isItemDetailsOpen && (
+        <Suspense fallback={null}>
+          <ItemDetailsModal
+            isOpen={isItemDetailsOpen}
+            onClose={() => setIsItemDetailsOpen(false)}
+            item={selectedItem}
+            onOpenEdit={handleOpenEditItem}
+            onOpenQuickAdjust={handleOpenQuickAdjust}
+            onOpenBarcode={handleOpenBarcode}
+            onOpenETR={(item) => {
+              setIsItemDetailsOpen(false);
+              setEtrItem(item);
+              setIsETROpen(true);
+            }}
+          />
+        </Suspense>
+      )}
 
       {/* ETR Fiscal Tax Receipt Modal */}
-      <ETRReceiptModal
-        isOpen={isETROpen}
-        onClose={() => setIsETROpen(false)}
-        items={etrItem ? [{ name: etrItem.name, qty: 1, price: etrItem.unitPrice }] : []}
-      />
+      {isETROpen && (
+        <Suspense fallback={null}>
+          <ETRReceiptModal
+            isOpen={isETROpen}
+            onClose={() => setIsETROpen(false)}
+            items={etrItem ? [{ name: etrItem.name, qty: 1, price: etrItem.unitPrice }] : []}
+          />
+        </Suspense>
+      )}
 
       {/* Add / Edit Supplier Modal */}
-      <AddSupplierModal
-        isOpen={isAddSupplierOpen}
-        onClose={() => setIsAddSupplierOpen(false)}
-        editingSupplier={editingSupplier}
-      />
+      {isAddSupplierOpen && (
+        <Suspense fallback={null}>
+          <AddSupplierModal
+            isOpen={isAddSupplierOpen}
+            onClose={() => setIsAddSupplierOpen(false)}
+            editingSupplier={editingSupplier}
+          />
+        </Suspense>
+      )}
 
       {/* Add Warehouse Modal */}
-      <AddWarehouseModal
-        isOpen={isAddWarehouseOpen}
-        onClose={() => setIsAddWarehouseOpen(false)}
-      />
+      {isAddWarehouseOpen && (
+        <Suspense fallback={null}>
+          <AddWarehouseModal
+            isOpen={isAddWarehouseOpen}
+            onClose={() => setIsAddWarehouseOpen(false)}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

@@ -315,5 +315,8 @@ export interface CompanyProfile {
   coldChainInspectorNote?: string;
   yardLastInspection?: string;
   yardInspectorNote?: string;
+  /** Categories and units the business added itself (beyond its catalog defaults). */
+  customCategories?: string[];
+  customUnits?: string[];
 }
 

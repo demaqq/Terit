@@ -12,12 +12,12 @@ import {
   ArrowUpDown,
   Crown,
   X,
-  SlidersHorizontal,
-} from 'lucide-react';
+  SlidersHorizontal, BookOpen } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
 import { InventoryItem, ItemStatus } from '../types/inventory';
 import { useToast } from '../components/Toast';
 import { escapeHtml, printHtmlDocument } from '../lib/posHardware';
+import { fmt } from '../i18n/fmt';
 
 const parseCSV = (text: string): string[][] => {
   const rows: string[][] = [];
@@ -76,18 +76,21 @@ interface InventoryViewProps {
   onOpenBarcode: (item: InventoryItem) => void;
   onViewItemDetails: (item: InventoryItem) => void;
   onOpenPricing: () => void;
+  onOpenCatalog?: () => void;
 }
 
 export const InventoryView: React.FC<InventoryViewProps> = ({
   onOpenAddItem,
+  onOpenCatalog,
   onOpenEditItem,
   onOpenQuickAdjust,
   onOpenBarcode,
   onViewItemDetails,
   onOpenPricing,
 }) => {
-  const { items, deleteItem, tier, importItems, warehouses, businessType, t } = useInventory();
+  const { items, deleteItem, tier, importItems, warehouses, businessType, profile, t } = useInventory();
   const { toast } = useToast();
+  const [showFilters, setShowFilters] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedLocation, setSelectedLocation] = useState('all');
@@ -487,7 +490,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
                 onClick={onOpenPricing}
                 className="flex items-center gap-1 text-[11px] text-amber-700 dark:text-amber-400 hover:underline font-semibold cursor-pointer whitespace-nowrap"
               >
-                <span>{t('free_plan')} ({items.length}/25 SKUs)</span>
+                <span>{fmt(t('inventory_25_skus'), [t('free_plan'), items.length])}</span>
                 <Crown className="w-3 h-3 shrink-0" />
               </button>
             )}
@@ -499,6 +502,17 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
 
         {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-2">
+          {onOpenCatalog && (
+            <button
+              type="button"
+              onClick={onOpenCatalog}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-800 dark:text-amber-300 text-xs font-semibold border border-amber-500/30 cursor-pointer transition-colors"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>{t('catalog_open_btn')}</span>
+            </button>
+          )}
+
           {/* CSV Import */}
           <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold border border-slate-300 dark:border-slate-700 cursor-pointer transition-colors">
             <Upload className="w-3.5 h-3.5 text-slate-500" />
@@ -538,7 +552,8 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
       {/* Filter and Search Bar */}
       <div className="terit-glass rounded-2xl p-3.5 space-y-3 transition-colors">
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
-          {/* Search Input */}
+          {/* Search Input (+ filter toggle on small screens) */}
+          <div className="flex items-center gap-2 flex-1 min-w-0">
           <div className="relative flex-1 min-w-0">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
@@ -549,9 +564,24 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
               className="w-full bg-white/80 dark:bg-slate-950/70 border border-slate-300 dark:border-slate-700 rounded-xl pl-9 pr-4 py-1.5 text-xs text-slate-900 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:border-amber-500"
             />
           </div>
+          <button
+            type="button"
+            onClick={() => setShowFilters((v) => !v)}
+            aria-expanded={showFilters}
+            className={`lg:hidden shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold cursor-pointer ${
+              showFilters || activeFilterCount > 0
+                ? 'bg-amber-500/10 border-amber-500/40 text-amber-700 dark:text-amber-400'
+                : 'bg-white/80 dark:bg-slate-950/70 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200'
+            }`}
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+            {t('filters_btn')}
+            {activeFilterCount > 0 && <span className="tabular-nums">({activeFilterCount})</span>}
+          </button>
+          </div>
 
           {/* Core Filter Dropdowns */}
-          <div className="flex flex-wrap items-center gap-2 min-w-0">
+          <div className={`${showFilters ? 'flex' : 'hidden'} lg:flex flex-wrap items-center gap-2 min-w-0`}>
             {/* Status Filter */}
             <select
               value={selectedStatus}
@@ -606,7 +636,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
         </div>
 
         {/* Business-Model-Specific Filters Strip */}
-        <div className="pt-2.5 border-t border-slate-900/8 dark:border-white/8 flex flex-col gap-2.5">
+        <div className={`${showFilters ? 'flex' : 'hidden'} lg:flex pt-2.5 border-t border-slate-900/8 dark:border-white/8 flex-col gap-2.5`}>
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-600 dark:text-slate-300 mr-1">
               <SlidersHorizontal className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
@@ -680,7 +710,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
             )}
 
             {/* Pharmacy, Supermarket, Minimarket: Expiry/Freshness Window + Form/Pack Unit */}
-            {(businessType === 'pharmacy' || businessType === 'supermarket' || businessType === 'minimarket') && (
+            {profile.expiry.tracked && (
               <>
                 <select
                   aria-label={t(`filter_expiry_label_${businessType}`)}
@@ -913,11 +943,10 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
                   {/* Pricing & Location */}
                   <div className="flex items-center justify-between text-xs font-mono">
                     <div className="text-slate-500">
-                      {t('unit_price')}: <strong className="text-slate-900 dark:text-white">{item.unitPrice.toFixed(2)} ETB</strong>
+                      {t('unit_price')}: <strong className="text-slate-900 dark:text-white">{fmt(t('barcode_etb'), [item.unitPrice.toFixed(2)])}</strong>
                     </div>
                     <div className="text-amber-600 dark:text-amber-400 font-bold">
-                      {t('valuation')}: {itemValuation.toFixed(2)} ETB
-                    </div>
+                      {fmt(t('dashboard_etb'), [t('valuation'), itemValuation.toFixed(2)])}</div>
                   </div>
 
                   {/* Batch / Expiry */}
@@ -1128,18 +1157,15 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
 
                       {/* Cost */}
                       <td className="py-3 px-3 text-right font-mono text-slate-600 dark:text-slate-400 tabular-nums">
-                        {item.costPrice.toFixed(2)} ETB
-                      </td>
+                        {fmt(t('barcode_etb'), [item.costPrice.toFixed(2)])}</td>
 
                       {/* Retail Price */}
                       <td className="py-3 px-3 text-right font-mono font-bold text-slate-900 dark:text-slate-200 tabular-nums">
-                        {item.unitPrice.toFixed(2)} ETB
-                      </td>
+                        {fmt(t('barcode_etb'), [item.unitPrice.toFixed(2)])}</td>
 
                       {/* Total Valuation */}
                       <td className="py-3 px-3 text-right font-mono font-extrabold text-amber-600 dark:text-amber-400 tabular-nums">
-                        {itemValuation.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ETB
-                      </td>
+                        {fmt(t('barcode_etb'), [itemValuation.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })])}</td>
 
                       {/* Actions */}
                       <td

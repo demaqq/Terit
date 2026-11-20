@@ -46,14 +46,14 @@ export const AlertsModal: React.FC<AlertsModalProps> = ({ isOpen, onClose }) => 
 
   const handlePreviewEmail = () => {
     const selectedItems = previewItems.slice(0, 3);
-    const businessName = companyProfile.companyName || t('alerts_your_business') || 'Your business';
+    const businessName = companyProfile.companyName || t('alerts_your_business');
     setEmailResult({
-      info: t('alerts_preview_info') || 'Preview generated locally. No email/SMS was sent.',
+      info: t('alerts_preview_info'),
       deliveryStatus: 'not_sent',
-      subject: `[${t('alerts_email_subject_prefix') || 'TERIT ALERT'}] ${selectedItems.length} ${t('alerts_inventory_items') || 'inventory item(s)'} · ${businessName}`,
+      subject: `[${t('alerts_email_subject_prefix')}] ${selectedItems.length} ${t('alerts_inventory_items')} · ${businessName}`,
       previewSummary: selectedItems.length
-        ? selectedItems.map((item) => `${item.name} (${item.sku}): ${item.quantity} ${t('alerts_on_hand') || 'on hand'} (${t('alerts_min') || 'min'}: ${item.minStockAlert})`).join(', ')
-        : (t('alerts_no_matching_items') || 'No matching inventory items.'),
+        ? selectedItems.map((item) => `${item.name} (${item.sku}): ${item.quantity} ${t('alerts_on_hand')} (${t('alerts_min')}: ${item.minStockAlert})`).join(', ')
+        : (t('alerts_no_matching_items')),
     });
   };
 
@@ -61,13 +61,13 @@ export const AlertsModal: React.FC<AlertsModalProps> = ({ isOpen, onClose }) => 
     const selectedItems = previewItems.slice(0, 2);
     const firstItem = selectedItems[0];
     const remainingCount = Math.max(0, selectedItems.length - 1);
-    const businessName = companyProfile.companyName || t('alerts_your_business') || 'Your business';
+    const businessName = companyProfile.companyName || t('alerts_your_business');
     const body = firstItem
-      ? `[${businessName} ${t('alerts_sms_subject') || 'Stock Alert'}] ${firstItem.name} ${t('alerts_is_at') || 'is at'} ${firstItem.quantity} ${t('alerts_units') || 'units'} (${t('alerts_minimum') || 'minimum'}: ${firstItem.minStockAlert}).${remainingCount > 0 ? ` +${remainingCount} ${t('alerts_more_items') || 'more item(s)'}` : ''}`
-      : `[${businessName} ${t('alerts_sms_subject') || 'Stock Alert'}] ${t('alerts_no_matching_items') || 'No matching inventory items.'}`;
+      ? `[${businessName} ${t('alerts_sms_subject')}] ${firstItem.name} ${t('alerts_is_at')} ${firstItem.quantity} ${t('alerts_units')} (${t('alerts_minimum')}: ${firstItem.minStockAlert}).${remainingCount > 0 ? ` +${remainingCount} ${t('alerts_more_items')}` : ''}`
+      : `[${businessName} ${t('alerts_sms_subject')}] ${t('alerts_no_matching_items')}`;
 
     setSmsResult({
-      info: t('alerts_preview_info') || 'Preview generated locally. No SMS was sent.',
+      info: t('alerts_preview_info'),
       deliveryStatus: 'not_sent',
       body,
       characterCount: body.length,
@@ -80,7 +80,7 @@ export const AlertsModal: React.FC<AlertsModalProps> = ({ isOpen, onClose }) => 
       <div className="terit-modal rounded-3xl max-w-2xl w-full p-5 sm:p-8 relative m-auto max-h-[92dvh] overflow-y-auto text-slate-900 dark:text-slate-100 transition-colors">
         <button
           onClick={onClose}
-          aria-label={t('alerts_close_aria') || 'Close alert delivery setup'}
+          aria-label={t('alerts_close_aria')}
           className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-900/8 dark:hover:bg-white/10 transition-colors cursor-pointer"
         >
           <X className="w-5 h-5" />
@@ -102,14 +102,14 @@ export const AlertsModal: React.FC<AlertsModalProps> = ({ isOpen, onClose }) => 
             <div className="flex items-center gap-2.5">
               <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />
               <div>
-                <strong className="text-amber-800 dark:text-amber-300">{t('alerts_preview_only') || 'Preview only · delivery unavailable'}</strong>
+                <strong className="text-amber-800 dark:text-amber-300">{t('alerts_preview_only')}</strong>
                 <div className="text-[11px] text-amber-700/80 dark:text-amber-400/80">
                   {lowStockItems.length} {t('alerts_low_stock_count')} · {outOfStockItems.length} {t('alerts_out_of_stock_count')}
                 </div>
               </div>
             </div>
               <span className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-800 dark:text-amber-300 font-bold">
-                {t('alerts_not_sent') || 'NOT SENT'}
+                {t('alerts_not_sent')}
               </span>
           </div>
 
@@ -120,7 +120,7 @@ export const AlertsModal: React.FC<AlertsModalProps> = ({ isOpen, onClose }) => 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-white">
                   <Mail className="w-4 h-4 text-blue-500" />
-                  <span>{t('alerts_email_preview') || 'Email preview'}</span>
+                  <span>{t('alerts_email_preview')}</span>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
@@ -212,7 +212,7 @@ export const AlertsModal: React.FC<AlertsModalProps> = ({ isOpen, onClose }) => 
                   className="rounded text-amber-500 focus:ring-0"
                 />
                 <span className="text-slate-800 dark:text-slate-200">
-                  {t('alerts_filter_low_stock')} (&le; {t('alerts_min_stock_short') || 'Min Stock'})
+                  {t('alerts_filter_low_stock')} (&le; {t('alerts_min_stock_short')})
                 </span>
               </label>
 
@@ -224,7 +224,7 @@ export const AlertsModal: React.FC<AlertsModalProps> = ({ isOpen, onClose }) => 
                   className="rounded text-amber-500 focus:ring-0"
                 />
                 <span className="text-slate-800 dark:text-slate-200">
-                  {t('alerts_filter_out_of_stock')} ({t('alerts_zero_units') || '0 Units Remaining'})
+                  {t('alerts_filter_out_of_stock')} ({t('alerts_zero_units')})
                 </span>
               </label>
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Plus, Trash2, ShoppingCart, AlertCircle } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
 import { POLineItem } from '../types/inventory';
+import { fmt } from '../i18n/fmt';
 
 interface CreatePOModalProps {
   isOpen: boolean;
@@ -177,7 +178,7 @@ export const CreatePOModal: React.FC<CreatePOModalProps> = ({
 
         <h2 className="text-base sm:text-lg font-bold mb-1 flex items-center gap-2 pr-8">
           <ShoppingCart className="w-4 h-4 text-amber-500 shrink-0" />
-          <span>{t('create_po_btn') || 'Generate Purchase Order'}</span>
+          <span>{t('create_po_btn')}</span>
         </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
             {t('create_po_subtitle')}
@@ -217,7 +218,7 @@ export const CreatePOModal: React.FC<CreatePOModalProps> = ({
 
             <div>
               <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                {t('vendor_supplier') || 'Vendor / Supplier'} *
+                {t('vendor_supplier')} *
               </label>
               <select
                 value={supplierId}
@@ -226,7 +227,7 @@ export const CreatePOModal: React.FC<CreatePOModalProps> = ({
               >
                 {suppliers.map((s) => (
                   <option key={s.id} value={s.id}>
-                    {s.name} ({(t('lead_time_days_short') || '{days}d lead').replace('{days}', String(s.leadTimeDays))})
+                    {s.name} ({(t('lead_time_days_short')).replace('{days}', String(s.leadTimeDays))})
                   </option>
                 ))}
               </select>
@@ -333,8 +334,7 @@ export const CreatePOModal: React.FC<CreatePOModalProps> = ({
                   <div className="pt-1.5 border-t border-slate-200 dark:border-slate-850 flex items-center justify-between text-xs font-mono">
                     <span className="text-slate-500 text-[11px]">{t('create_po_line_total_label')}</span>
                     <span className="font-extrabold text-amber-600 dark:text-amber-400">
-                      {line.totalCost.toFixed(2)} ETB
-                    </span>
+                      {fmt(t('barcode_etb'), [line.totalCost.toFixed(2)])}</span>
                   </div>
                 </div>
               ))}
@@ -392,8 +392,7 @@ export const CreatePOModal: React.FC<CreatePOModalProps> = ({
                           />
                         </td>
                         <td className="py-2 px-3 text-right font-mono font-bold text-amber-600 dark:text-amber-400 whitespace-nowrap">
-                          {line.totalCost.toFixed(2)} ETB
-                        </td>
+                          {fmt(t('barcode_etb'), [line.totalCost.toFixed(2)])}</td>
                         <td className="py-2 px-2 text-center">
                           <button
                             type="button"
@@ -449,8 +448,7 @@ export const CreatePOModal: React.FC<CreatePOModalProps> = ({
                   {t('create_po_estimated_total')}
                 </span>
               <span className="text-lg sm:text-xl font-black font-mono text-slate-900 dark:text-white">
-                {totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ETB
-              </span>
+                {fmt(t('barcode_etb'), [totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })])}</span>
             </div>
           </div>
 
@@ -475,13 +473,13 @@ export const CreatePOModal: React.FC<CreatePOModalProps> = ({
               onClick={onClose}
               className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold transition-colors cursor-pointer"
             >
-              {t('cancel_btn') || 'Cancel'}
+              {t('cancel_btn')}
             </button>
             <button
               type="submit"
               className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold shadow-md shadow-amber-500/10 transition-colors cursor-pointer"
             >
-              {t('create_po_btn') || 'Issue Purchase Order'}
+              {t('create_po_btn')}
             </button>
           </div>
         </form>
