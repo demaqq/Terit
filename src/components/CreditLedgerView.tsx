@@ -21,6 +21,7 @@ import { loadCreditRecords, saveCreditRecords, outstandingForCustomer, isOverdue
 import { allowsFraction, defaultDueDate, expiryState } from '../data/businessProfiles';
 import { useToast } from '../components/Toast';
 import { ETRReceiptModal } from './ETRReceiptModal';
+import { fmt } from '../i18n/fmt';
 
 export const CreditLedgerView: React.FC = () => {
   const { items, companyProfile, businessType, profile, quickAdjustStock, t } = useInventory();
@@ -126,13 +127,13 @@ export const CreditLedgerView: React.FC = () => {
     );
 
     setIsSettleOpen(false);
-      toast(t('payment_record_updated_toast') || 'Payment record updated. Terit does not process or verify the payment.', 'success');
+      toast(t('payment_record_updated_toast'), 'success');
   };
 
   const handleCreateCredit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCustName.trim()) {
-      toast(t('credit_customer_required') || 'Please enter customer name.', 'error');
+      toast(t('credit_customer_required'), 'error');
       return;
     }
     if (!newItem) {
@@ -246,7 +247,7 @@ export const CreditLedgerView: React.FC = () => {
             <DollarSign className="w-4 h-4 text-amber-500" />
           </div>
           <div className="mt-2 text-2xl font-black font-mono text-slate-900 dark:text-white">
-            {totalDebtOutstanding.toLocaleString()} <span className="text-xs font-normal text-slate-500">ETB</span>
+            {totalDebtOutstanding.toLocaleString()} <span className="text-xs font-normal text-slate-500">{t('currency_etb')}</span>
           </div>
           <div className="mt-1 text-[11px] text-amber-600 dark:text-amber-400 font-semibold">
             {activeDebtorsCount} {t('active_accounts_label')}
@@ -259,7 +260,7 @@ export const CreditLedgerView: React.FC = () => {
             <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
           </div>
           <div className="mt-2 text-2xl font-black font-mono text-rose-600 dark:text-rose-400 tabular-nums truncate">
-            {totalOverdue.toLocaleString()} <span className="text-xs font-normal text-slate-500">ETB</span>
+            {totalOverdue.toLocaleString()} <span className="text-xs font-normal text-slate-500">{t('currency_etb')}</span>
           </div>
           <div className="mt-1 text-[11px] text-rose-500 truncate">
             {t('telebirr_sms_needed')}
@@ -272,7 +273,7 @@ export const CreditLedgerView: React.FC = () => {
             <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
           </div>
           <div className="mt-2 text-2xl font-black font-mono text-emerald-600 dark:text-emerald-400 tabular-nums truncate">
-            {totalCollected.toLocaleString()} <span className="text-xs font-normal text-slate-500">ETB</span>
+            {totalCollected.toLocaleString()} <span className="text-xs font-normal text-slate-500">{t('currency_etb')}</span>
           </div>
           <div className="mt-1 text-[11px] text-slate-500 truncate">
             {t('settled_mobile_money')}
@@ -319,7 +320,7 @@ export const CreditLedgerView: React.FC = () => {
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              {st === 'all' ? (t('ledger_filter_all') || 'ALL').toUpperCase() : (t(`credit_status_${st}`) || st).toUpperCase()}
+              {st === 'all' ? (t('ledger_filter_all')).toUpperCase() : (t(`credit_status_${st}`) || st).toUpperCase()}
             </button>
           ))}
         </div>
@@ -356,8 +357,7 @@ export const CreditLedgerView: React.FC = () => {
                 <div>
                   <div className="text-[10px] text-slate-400">{t('outstanding_due_label')}</div>
                   <div className="text-base font-black text-slate-900 dark:text-white">
-                    {r.remainingAmount.toLocaleString()} ETB
-                  </div>
+                    {fmt(t('barcode_etb'), [r.remainingAmount.toLocaleString()])}</div>
                 </div>
                 <div className="text-right">
                   <div className="text-[10px] text-slate-400">{t('due_date_label')}</div>
@@ -384,7 +384,7 @@ export const CreditLedgerView: React.FC = () => {
                   className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold flex items-center gap-1 cursor-pointer"
                 >
                   <FileText className="w-3.5 h-3.5" />
-                  <span>{t('proforma_btn') || 'Proforma'}</span>
+                  <span>{t('proforma_btn')}</span>
                 </button>
                 {r.remainingAmount > 0 && (
                   <button
@@ -392,7 +392,7 @@ export const CreditLedgerView: React.FC = () => {
                     className="px-3 py-1.5 rounded-xl bg-amber-500 text-slate-950 text-xs font-bold flex items-center gap-1 shadow-xs cursor-pointer"
                   >
                     <CreditCard className="w-3.5 h-3.5" />
-                    <span>{t('record_payment_btn') || 'Record payment'}</span>
+                    <span>{t('record_payment_btn')}</span>
                   </button>
                 )}
               </div>
@@ -405,9 +405,9 @@ export const CreditLedgerView: React.FC = () => {
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-950/60 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
-                <th className="py-3 px-4 font-bold">{t('customer_debtor') || 'Customer / Debtor'}</th>
+                <th className="py-3 px-4 font-bold">{t('customer_debtor')}</th>
                 <th className="py-3 px-3 font-bold">{t('invoice_ref_label')}</th>
-                <th className="py-3 px-3 font-bold text-right">{t('total_revenue') || 'Total Amount'}</th>
+                <th className="py-3 px-3 font-bold text-right">{t('total_revenue')}</th>
                 <th className="py-3 px-3 font-bold text-right">{t('paid_amount')}</th>
                 <th className="py-3 px-3 font-bold text-right">{t('outstanding_due_label')}</th>
                 <th className="py-3 px-3 font-bold text-center">{t('due_date_label')}</th>
@@ -423,11 +423,10 @@ export const CreditLedgerView: React.FC = () => {
                     <div className="font-mono text-[11px] text-slate-500">{r.customerPhone}</div>
                   </td>
                   <td className="py-3 px-3 font-mono text-slate-600 dark:text-slate-400">{r.invoiceNumber}</td>
-                  <td className="py-3 px-3 font-mono text-right font-semibold">{r.totalAmount.toLocaleString()} ETB</td>
-                  <td className="py-3 px-3 font-mono text-right text-emerald-600">{r.paidAmount.toLocaleString()} ETB</td>
+                  <td className="py-3 px-3 font-mono text-right font-semibold">{fmt(t('barcode_etb'), [r.totalAmount.toLocaleString()])}</td>
+                  <td className="py-3 px-3 font-mono text-right text-emerald-600">{fmt(t('barcode_etb'), [r.paidAmount.toLocaleString()])}</td>
                   <td className="py-3 px-3 font-mono text-right font-black text-amber-600 dark:text-amber-400">
-                    {r.remainingAmount.toLocaleString()} ETB
-                  </td>
+                    {fmt(t('barcode_etb'), [r.remainingAmount.toLocaleString()])}</td>
                   <td className="py-3 px-3 text-center font-mono">
                     <span className={effectiveStatus(r) === 'overdue' ? 'text-rose-600 font-bold' : 'text-slate-500'}>
                       {r.dueDate}
@@ -462,10 +461,10 @@ export const CreditLedgerView: React.FC = () => {
                           setIsReceiptOpen(true);
                         }}
                         className="px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold flex items-center gap-1 cursor-pointer"
-                        title={t('view_proforma_title') || 'View Proforma'}
+                        title={t('view_proforma_title')}
                       >
                         <FileText className="w-3.5 h-3.5" />
-                        <span>{t('proforma_btn') || 'Proforma'}</span>
+                        <span>{t('proforma_btn')}</span>
                       </button>
                       {r.remainingAmount > 0 && (
                         <button
@@ -473,7 +472,7 @@ export const CreditLedgerView: React.FC = () => {
                           className="px-2.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold flex items-center gap-1 shadow-xs cursor-pointer"
                         >
                           <CreditCard className="w-3.5 h-3.5" />
-                          <span>{t('record_payment_btn') || 'Record payment'}</span>
+                          <span>{t('record_payment_btn')}</span>
                         </button>
                       )}
                     </div>
@@ -491,7 +490,7 @@ export const CreditLedgerView: React.FC = () => {
           <div className="terit-modal rounded-3xl max-w-md w-full p-5 sm:p-6 m-auto max-h-[92dvh] overflow-y-auto relative text-slate-900 dark:text-slate-100">
             <button
               onClick={() => setIsSettleOpen(false)}
-              aria-label={t('close_btn') || 'Close'}
+              aria-label={t('close_btn')}
               className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-900/8 dark:hover:bg-white/10 transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
@@ -499,21 +498,21 @@ export const CreditLedgerView: React.FC = () => {
 
             <h3 className="text-base font-bold mb-1 flex items-center gap-2">
               <Smartphone className="w-4 h-4 text-amber-500" />
-              <span>{t('record_payment_title') || 'Record Payment Received'}</span>
+              <span>{t('record_payment_title')}</span>
             </h3>
             <p className="text-xs text-slate-500 mb-4">
-              {(t('record_payment_desc') || 'Record a payment you have already verified outside Terit for {name} ({invoice}).')
+              {(t('record_payment_desc'))
                 .replace('{name}', selectedRecord.customerName)
                 .replace('{invoice}', selectedRecord.invoiceNumber)}
             </p>
 
             <form onSubmit={handleConfirmSettle} className="space-y-4 text-xs">
               <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-500/30 text-blue-900 dark:text-blue-200">
-                {t('record_payment_notice') || 'Terit does not initiate, send, or verify payments. Confirm receipt with your payment provider before recording it here.'}
+                {t('record_payment_notice')}
               </div>
               <div>
                 <label className="block font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                  {t('payment_method_received') || 'Payment method received'}
+                  {t('payment_method_received')}
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
@@ -526,7 +525,7 @@ export const CreditLedgerView: React.FC = () => {
                     }`}
                   >
                     <Smartphone className="w-4 h-4" />
-                    <span>{t('telebirr_gateway') || 'Telebirr'}</span>
+                    <span>{t('telebirr_gateway')}</span>
                   </button>
                   <button
                     type="button"
@@ -538,14 +537,14 @@ export const CreditLedgerView: React.FC = () => {
                     }`}
                   >
                     <Building className="w-4 h-4" />
-                    <span>{t('cbe_birr_gateway') || 'CBE Birr'}</span>
+                    <span>{t('cbe_birr_gateway')}</span>
                   </button>
                 </div>
               </div>
 
               <div>
                 <label className="block font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                  {t('amount_received_label') || 'Amount Received (ETB)'}
+                  {t('amount_received_label')}
                 </label>
                 <input
                   type="number"
@@ -561,13 +560,13 @@ export const CreditLedgerView: React.FC = () => {
 
               {settleMethod === 'telebirr' && (
                 <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-500/30 text-[11px] text-amber-900 dark:text-amber-200 space-y-1">
-                  {t('telebirr_confirm_note') || 'Select Telebirr only if you have independently confirmed receipt in your verified merchant account.'}
+                  {t('telebirr_confirm_note')}
                 </div>
               )}
 
               {settleMethod === 'cbe_birr' && (
                 <div className="p-3 rounded-xl bg-purple-50 dark:bg-purple-950/20 border border-purple-500/30 text-[11px] text-purple-900 dark:text-purple-200 space-y-1">
-                  {t('cbe_birr_confirm_note') || 'Select CBE Birr only if you have independently confirmed receipt in your verified merchant account.'}
+                  {t('cbe_birr_confirm_note')}
                 </div>
               )}
 
@@ -577,13 +576,13 @@ export const CreditLedgerView: React.FC = () => {
                   onClick={() => setIsSettleOpen(false)}
                   className="px-4 py-2 rounded-xl text-slate-500 font-semibold"
                 >
-                  {t('cancel_btn') || 'Cancel'}
+                  {t('cancel_btn')}
                 </button>
                 <button
                   type="submit"
                   className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-md cursor-pointer"
                 >
-                  {t('record_verified_payment_btn') || 'Record verified payment'}
+                  {t('record_verified_payment_btn')}
                 </button>
               </div>
             </form>
@@ -616,26 +615,26 @@ export const CreditLedgerView: React.FC = () => {
               </div>
 
               <div className="space-y-1 text-[11px]">
-                <div><strong>{t('invoice_ref_label') || 'Invoice Ref:'}</strong> {selectedRecord.invoiceNumber}</div>
-                <div><strong>{t('customer_label') || 'Customer:'}</strong> {selectedRecord.customerName}</div>
-                <div><strong>{t('phone_label_short') || 'Phone:'}</strong> {selectedRecord.customerPhone}</div>
-                <div><strong>{t('issued_date_label') || 'Issued Date:'}</strong> {selectedRecord.createdAt}</div>
-                <div><strong>{t('due_date_label') || 'Due Date:'}</strong> {selectedRecord.dueDate}</div>
+                <div><strong>{t('invoice_ref_label')}</strong> {selectedRecord.invoiceNumber}</div>
+                <div><strong>{t('customer_label')}</strong> {selectedRecord.customerName}</div>
+                <div><strong>{t('phone_label_short')}</strong> {selectedRecord.customerPhone}</div>
+                <div><strong>{t('issued_date_label')}</strong> {selectedRecord.createdAt}</div>
+                <div><strong>{t('due_date_label')}</strong> {selectedRecord.dueDate}</div>
               </div>
 
               <div className="border-t border-b border-slate-200 py-2 space-y-1">
                 {selectedRecord.itemsPurchased.map((item, i) => (
                   <div key={i} className="flex justify-between text-[11px]">
                     <span>{item.itemName} x{item.quantity}</span>
-                    <span>{(item.quantity * item.unitPrice).toLocaleString()} ETB</span>
+                    <span>{fmt(t('barcode_etb'), [(item.quantity * item.unitPrice).toLocaleString()])}</span>
                   </div>
                 ))}
               </div>
 
               <div className="space-y-1 text-right text-xs">
-                <div>{t('total_bill_label') || 'Total Bill:'} <strong>{selectedRecord.totalAmount.toLocaleString()} ETB</strong></div>
-                <div className="text-emerald-600">{t('paid_down_label') || 'Paid Down:'} -{selectedRecord.paidAmount.toLocaleString()} ETB</div>
-                <div className="text-amber-600 font-bold">{t('remaining_due_label') || 'Remaining Due:'} {selectedRecord.remainingAmount.toLocaleString()} ETB</div>
+                <div>{t('total_bill_label')} <strong>{fmt(t('barcode_etb'), [selectedRecord.totalAmount.toLocaleString()])}</strong></div>
+                <div className="text-emerald-600">{fmt(t('credit_ledger_etb'), [t('paid_down_label'), selectedRecord.paidAmount.toLocaleString()])}</div>
+                <div className="text-amber-600 font-bold">{fmt(t('credit_ledger_etb_3'), [t('remaining_due_label'), selectedRecord.remainingAmount.toLocaleString()])}</div>
               </div>
             </div>
 
@@ -645,7 +644,7 @@ export const CreditLedgerView: React.FC = () => {
                 className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow-md cursor-pointer"
               >
                 <Printer className="w-4 h-4" />
-                <span>{t('print_proforma') || 'Print Proforma Slip'}</span>
+                <span>{t('print_proforma')}</span>
               </button>
             </div>
           </div>
@@ -693,7 +692,7 @@ export const CreditLedgerView: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold mb-1">{t('credit_phone_label') || 'Phone Number *'}</label>
+                  <label className="block font-semibold mb-1">{t('credit_phone_label')}</label>
                   <input
                     type="tel"
                     required
@@ -703,7 +702,7 @@ export const CreditLedgerView: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold mb-1">{t('credit_due_date_label') || 'Payment Due Date *'}</label>
+                  <label className="block font-semibold mb-1">{t('credit_due_date_label')}</label>
                   <input
                     type="date"
                     required
@@ -731,8 +730,7 @@ export const CreditLedgerView: React.FC = () => {
                         const expired = profile.expiry.blockExpiredIssue && expiryState(i, profile) === 'expired';
                         return (
                           <option key={i.id} value={i.id} disabled={i.quantity <= 0 || expired}>
-                            {i.name} · {i.unitPrice.toLocaleString()} ETB · {i.quantity} {i.unitOfMeasure}
-                            {expired ? ` (${t('expired_label')})` : ''}
+                            {fmt(t('credit_ledger_etb_2'), [i.name, i.unitPrice.toLocaleString(), i.quantity, i.unitOfMeasure, expired ? ` (${t('expired_label')})` : ''])}
                           </option>
                         );
                       })}
@@ -755,13 +753,12 @@ export const CreditLedgerView: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <span className="block font-semibold mb-1">{t('credit_total_label') || 'Total Amount (ETB) *'}</span>
+                  <span className="block font-semibold mb-1">{t('credit_total_label')}</span>
                   <div className="w-full p-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs font-mono font-bold text-slate-900 dark:text-slate-100 tabular-nums">
-                    {newTotalAmount.toLocaleString()} ETB
-                  </div>
+                    {fmt(t('barcode_etb'), [newTotalAmount.toLocaleString()])}</div>
                 </div>
                 <div>
-                  <label htmlFor="credit-paid" className="block font-semibold mb-1">{t('credit_advance_label') || 'Advance Down Payment (ETB)'}</label>
+                  <label htmlFor="credit-paid" className="block font-semibold mb-1">{t('credit_advance_label')}</label>
                   <input
                     id="credit-paid"
                     type="number"
@@ -789,12 +786,12 @@ export const CreditLedgerView: React.FC = () => {
               </p>
 
               <div>
-                <label className="block font-semibold mb-1">{t('credit_notes_label') || 'Credit Terms / Notes'}</label>
+                <label className="block font-semibold mb-1">{t('credit_notes_label')}</label>
                 <textarea
                   rows={2}
                   value={newNotes}
                   onChange={(e) => setNewNotes(e.target.value)}
-                  placeholder={t('credit_notes_placeholder') || 'Guarantor, repayment schedule, or branch notes...'}
+                  placeholder={t('credit_notes_placeholder')}
                   className="w-full p-2 rounded-xl bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100"
                 />
               </div>
@@ -805,13 +802,13 @@ export const CreditLedgerView: React.FC = () => {
                   onClick={() => setIsNewCreditOpen(false)}
                   className="px-4 py-2 rounded-xl text-slate-500 font-semibold"
                 >
-                  {t('cancel_btn') || 'Cancel'}
+                  {t('cancel_btn')}
                 </button>
                 <button
                   type="submit"
                   className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold shadow-md cursor-pointer"
                 >
-                  {t('record_credit_sale_btn') || 'Record Credit Sale'}
+                  {t('record_credit_sale_btn')}
                 </button>
               </div>
             </form>

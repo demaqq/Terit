@@ -115,13 +115,13 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({ isOpen, onClos
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const nicheBadgeMap: Record<string, string> = {
-    pharmacy: t('biz_pharmacy_title') || 'Pharmacy',
-    building: t('biz_building_title') || 'Building Materials',
-    supermarket: t('biz_supermarket_title') || 'Supermarket',
-    minimarket: t('biz_minimarket_title') || 'Minimarket',
-    shop: t('biz_shop_title') || 'Retail Shop',
-    store: t('biz_store_title') || 'Wholesale Depot',
-    other: t('biz_other_title') || 'General Commerce',
+    pharmacy: t('biz_pharmacy_title'),
+    building: t('biz_building_title'),
+    supermarket: t('biz_supermarket_title'),
+    minimarket: t('biz_minimarket_title'),
+    shop: t('biz_shop_title'),
+    store: t('biz_store_title'),
+    other: t('biz_other_title'),
   };
   const activeNicheLabel = nicheBadgeMap[businessType] || businessType.toUpperCase();
 

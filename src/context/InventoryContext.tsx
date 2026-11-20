@@ -56,6 +56,7 @@ import {
 } from '../data/businessPresets';
 import { useToast } from '../components/Toast';
 import { offlineSync } from '../lib/offlineSync';
+import { fmt } from '../i18n/fmt';
 import { isCompanyProfileComplete } from '../lib/validation';
 import { getBusinessProfile, expiryState, roundToPack, BusinessProfile } from '../data/businessProfiles';
 
@@ -1466,7 +1467,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     const available = getItemQuantityAtLocation(itemId, locationId);
     if (available < quantity) {
-      toast(`Insufficient stock at ${locationId}. Available: ${available}`, 'error');
+      toast(fmt(t('stock_insufficient_at'), [locations.find((l) => l.id === locationId)?.name || locationId, available]), 'error');
       return false;
     }
 

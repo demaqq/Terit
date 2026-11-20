@@ -33,6 +33,7 @@ import { useToast } from '../components/Toast';
 import { TabButton } from './IndustryTools/TabButton';
 import { StatCard } from './IndustryTools/StatCard';
 import { SuccessBanner } from './IndustryTools/SuccessBanner';
+import { fmt } from '../i18n/fmt';
 
 interface IndustryToolsPanelProps {
   onOpenCreatePO: (supplierId?: string, itemId?: string) => void;
@@ -374,7 +375,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
   // Minimarket Express Sale
   const handleExpressSale = async (item: InventoryItem) => {
     if (item.quantity < expressCheckoutQty) {
-      toast(`Insufficient stock. Only ${item.quantity} ${item.unitOfMeasure} available.`, 'error');
+      toast(fmt(t('stock_insufficient_only'), [item.quantity, item.unitOfMeasure]), 'error');
       return;
     }
     const saleTotal = item.unitPrice * expressCheckoutQty;
@@ -442,7 +443,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
     const destLoc = allLocations.find((l) => l.id === transferDestLocId);
     if (!sourceLoc || !destLoc) return;
     if (sourceLoc.id === destLoc.id) {
-      toast('Select a different destination branch or depot than the source.', 'error');
+      toast(t('industry_tools_select_different_destination_branch_or'), 'error');
       return;
     }
     const ok = await transferStock(
@@ -539,7 +540,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
             <div className="space-y-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-950/60 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Filter Expiry Window:</span>
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{t('industry_tools_filter_expiry_window')}</span>
                   <div className="flex flex-wrap items-center gap-1.5">
                     {[30, 60, 90, 180].map((days) => (
                       <button
@@ -550,9 +551,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                             ? 'bg-amber-500 text-slate-950 font-bold'
                             : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700'
                         }`}
-                      >
-                        &le; {days} Days
-                      </button>
+                      >{fmt(t('industry_tools_days'), [days])}</button>
                     ))}
                   </div>
                 </div>
@@ -560,16 +559,13 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                 <div className="text-xs text-slate-600 dark:text-slate-400 font-mono">
                   {quarantinedBatches.length > 0 && (
                     <span className="text-rose-700 dark:text-rose-400 font-bold">
-                      {quarantinedBatches.length} batch(es) quarantined
-                    </span>
+                      {fmt(t('industry_tools_batch_es_quarantined'), [quarantinedBatches.length])}</span>
                   )}
                 </div>
               </div>
 
               {filteredExpiryItems.length === 0 ? (
-                <div className="text-center py-8 text-xs text-slate-600 dark:text-slate-400">
-                  No medication batches expiring within {expiryDaysFilter} days. All stock is safe.
-                </div>
+                <div className="text-center py-8 text-xs text-slate-600 dark:text-slate-400">{fmt(t('industry_tools_no_medication_batches_expiring_within'), [expiryDaysFilter])}</div>
               ) : (
                 <div className="divide-y divide-slate-200 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
                   {filteredExpiryItems.map((item) => {
@@ -595,23 +591,20 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                               {item.sku}
                             </span>
                             {isQuarantined && (
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-600 text-white">
-                                QUARANTINED
-                              </span>
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-600 text-white">{t('industry_tools_quarantined')}</span>
                             )}
                           </div>
                           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-slate-600 dark:text-slate-400 text-[11px] font-mono">
-                            <span>Batch: {item.batchNumber || 'N/A'}</span>
+                            <span>{fmt(t('industry_tools_batch'), [item.batchNumber || 'N/A'])}</span>
                             <span>·</span>
-                            <span>Exp: {item.expiryDate}</span>
+                            <span>{fmt(t('industry_tools_exp'), [item.expiryDate])}</span>
                             <span>·</span>
                             <span className={daysRemaining <= 30 ? 'text-rose-600 dark:text-rose-400 font-bold' : 'text-amber-700 dark:text-amber-400 font-semibold'}>
-                              {daysRemaining} days left
-                            </span>
+                              {fmt(t('industry_tools_days_left'), [daysRemaining])}</span>
                             <span>·</span>
-                            <span>Qty: {item.quantity} {item.unitOfMeasure}</span>
+                            <span>{fmt(t('industry_tools_qty'), [item.quantity, item.unitOfMeasure])}</span>
                             <span>·</span>
-                            <span>Risk Value: {(item.quantity * item.costPrice).toLocaleString()} ETB</span>
+                            <span>{fmt(t('industry_tools_risk_value_etb'), [(item.quantity * item.costPrice).toLocaleString()])}</span>
                           </div>
                         </div>
 
@@ -625,15 +618,13 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                                   : 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 border-rose-300 dark:border-rose-700 hover:bg-rose-100'
                               }`}
                             >
-                              {isQuarantined ? 'Release Quarantine' : 'Quarantine Batch'}
+                              {isQuarantined ? t('industry_tools_release_quarantine') : t('industry_tools_quarantine_batch')}
                             </button>
                           )}
                           <button
                             onClick={() => onOpenCreatePO(item.supplierId, item.id)}
                             className="px-2.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-colors cursor-pointer"
-                          >
-                            Emergency Restock
-                          </button>
+                          >{t('industry_tools_emergency_restock')}</button>
                         </div>
                       </div>
                     );
@@ -648,19 +639,19 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <StatCard
-                  title="Vaccine Fridge #1"
+                  title={t('industry_tools_vaccine_fridge')}
                   value="3.4°C"
                   subtitle="Standard: 2°C – 8°C (Optimal)"
                   valueColor="emerald"
                 />
                 <StatCard
-                  title="Insulin Refrigerator #2"
+                  title={t('industry_tools_insulin_refrigerator')}
                   value="4.2°C"
                   subtitle="Standard: 2°C – 8°C (Optimal)"
                   valueColor="emerald"
                 />
                 <StatCard
-                  title="Monitored Cold-Chain SKUs"
+                  title={t('industry_tools_monitored_cold_chain_skus')}
                   value={`${coldChainItems.length} SKUs`}
                   subtitle={`${coldChainItems.reduce((s, i) => s + i.quantity, 0)} units in 2–8°C control`}
                 />
@@ -673,7 +664,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                       <div className="min-w-0">
                         <div className="font-bold text-slate-900 dark:text-white truncate">{item.name}</div>
                         <div className="text-[11px] font-mono text-slate-600 dark:text-slate-400 mt-0.5">
-                          {item.location} · Batch: {item.batchNumber || 'N/A'} · Exp: {item.expiryDate || 'N/A'}
+                          {fmt(t('industry_tools_batch_exp'), [item.location, item.batchNumber || 'N/A', item.expiryDate || 'N/A'])}
                         </div>
                       </div>
                       <div className="text-right shrink-0">
@@ -681,8 +672,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                           {item.quantity} {item.unitOfMeasure}
                         </div>
                         <div className="text-[10px] font-mono text-amber-700 dark:text-amber-400">
-                          {(item.quantity * item.unitPrice).toLocaleString()} ETB
-                        </div>
+                          {fmt(t('barcode_etb'), [(item.quantity * item.unitPrice).toLocaleString()])}</div>
                       </div>
                     </div>
                   ))}
@@ -692,15 +682,13 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
               {tempLogSuccess && <SuccessBanner message={tempLogSuccess} />}
 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-                <span className="text-xs text-slate-600 dark:text-slate-400">
-                  Meets Ethiopian EFDA &amp; WHO Good Distribution Practice (GDP) cold-chain logs.
-                </span>
+                <span className="text-xs text-slate-600 dark:text-slate-400">{t('industry_tools_meets_ethiopian_efda_who_good')}</span>
                 <button
                   onClick={handleLogColdChain}
                   className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
                 >
                   <Thermometer className="w-4 h-4" />
-                  <span>Log Temperature Inspection</span>
+                  <span>{t('industry_tools_log_temperature_inspection')}</span>
                 </button>
               </div>
             </div>
@@ -711,16 +699,14 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
             <div className="p-4 rounded-2xl terit-glass-sub space-y-4">
               <h4 className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-2">
                 <Calculator className="w-4 h-4 text-amber-500" />
-                <span>Patient Rx Dispensing, Strip Converter &amp; ETB Billing</span>
+                <span>{t('industry_tools_patient_rx_dispensing_strip_converter')}</span>
               </h4>
 
               {dispenseNotice && <SuccessBanner message={dispenseNotice} />}
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Medication SKU from Dispensary:
-                  </label>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">{t('industry_tools_medication_sku_from_dispensary')}</label>
                   <select
                     value={selectedMed?.id || ''}
                     onChange={(e) => setSelectedMedId(e.target.value)}
@@ -735,9 +721,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Total Tablets / Capsules Prescribed:
-                  </label>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">{t('industry_tools_total_tablets_capsules_prescribed')}</label>
                   <input
                     type="number"
                     min="1"
@@ -748,9 +732,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Daily Dosage Frequency (Doses/Day):
-                  </label>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">{t('industry_tools_daily_dosage_frequency_doses_day')}</label>
                   <input
                     type="number"
                     min="1"
@@ -764,32 +746,24 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
                 <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
-                  <div className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold">Patient Course Duration</div>
+                  <div className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold">{t('industry_tools_patient_course_duration')}</div>
                   <div className="text-xl font-bold font-mono text-amber-700 dark:text-amber-400 mt-1">
-                    {Math.floor(dosageTablets / dosagePerDay)} Days
-                  </div>
-                  <div className="text-[10px] text-slate-500 mt-0.5">
-                    ({(dosageTablets / dosagePerDay / 30).toFixed(1)} months)
-                  </div>
+                    {fmt(t('industry_tools_days_2'), [Math.floor(dosageTablets / dosagePerDay)])}</div>
+                  <div className="text-[10px] text-slate-500 mt-0.5">{fmt(t('industry_tools_months'), [(dosageTablets / dosagePerDay / 30).toFixed(1)])}</div>
                 </div>
 
                 <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
-                  <div className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold">Packaging Allocation</div>
+                  <div className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold">{t('industry_tools_packaging_allocation')}</div>
                   <div className="text-xl font-bold font-mono text-slate-900 dark:text-white mt-1">
-                    {stripsRequested} Strips
-                  </div>
-                  <div className="text-[10px] text-slate-500 mt-0.5">
-                    or {boxesRequested} Hospital Box(es) (100s)
-                  </div>
+                    {fmt(t('industry_tools_strips'), [stripsRequested])}</div>
+                  <div className="text-[10px] text-slate-500 mt-0.5">{fmt(t('industry_tools_or_hospital_box_es_100s'), [boxesRequested])}</div>
                 </div>
 
                 <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
-                  <div className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold">Estimated Rx Retail Total</div>
+                  <div className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold">{t('industry_tools_estimated_rx_retail_total')}</div>
                   <div className="text-xl font-bold font-mono text-emerald-700 dark:text-emerald-400 mt-1">
-                    {estimatedRxTotalETB.toLocaleString()} ETB
-                  </div>
-                  <div className="text-[10px] text-slate-500 mt-0.5">
-                    Stock: {selectedMed?.quantity ?? 0} {selectedMed?.unitOfMeasure || 'units'}
+                    {fmt(t('barcode_etb'), [estimatedRxTotalETB.toLocaleString()])}</div>
+                  <div className="text-[10px] text-slate-500 mt-0.5">{fmt(t('industry_tools_stock'), [selectedMed?.quantity ?? 0, selectedMed?.unitOfMeasure || 'units'])}
                   </div>
                 </div>
               </div>
@@ -800,9 +774,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                     type="button"
                     onClick={handleDispenseMedication}
                     className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-colors cursor-pointer shadow-xs"
-                  >
-                    Dispense &amp; Deduct Stock
-                  </button>
+                  >{t('industry_tools_dispense_deduct_stock')}</button>
                 </div>
               )}
             </div>
@@ -839,9 +811,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
             <div className="space-y-3">
               <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/20 border border-amber-300 dark:border-amber-700/40 text-xs text-amber-900 dark:text-amber-200 flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-                <span>
-                  Daily produce, dairy &amp; bakery freshness monitoring helps supermarkets cut shrinkage by up to 22% with targeted evening ETB markdowns.
-                </span>
+                <span>{t('industry_tools_daily_produce_dairy_bakery_freshness')}</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
@@ -856,14 +826,11 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                           {item.name}
                         </span>
                         <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-800 dark:text-amber-400 font-bold shrink-0">
-                          {item.unitPrice.toLocaleString()} ETB
-                        </span>
+                          {fmt(t('barcode_etb'), [item.unitPrice.toLocaleString()])}</span>
                       </div>
-                      <div className="text-[11px] text-slate-600 dark:text-slate-400">
-                        Aisle: {item.location || 'Main Floor'}
+                      <div className="text-[11px] text-slate-600 dark:text-slate-400">{fmt(t('industry_tools_aisle'), [item.location || 'Main Floor'])}
                       </div>
-                      <div className="text-[11px] text-slate-600 dark:text-slate-400">
-                        Current stock: <strong className="text-slate-900 dark:text-white">{item.quantity} {item.unitOfMeasure}</strong>
+                      <div className="text-[11px] text-slate-600 dark:text-slate-400">{t('industry_tools_current_stock')}{' '}<strong className="text-slate-900 dark:text-white">{item.quantity} {item.unitOfMeasure}</strong>
                       </div>
                     </div>
 
@@ -871,9 +838,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                       <button
                         onClick={() => onOpenQuickAdjust(item.id)}
                         className="text-[11px] text-slate-700 dark:text-slate-300 hover:text-amber-700 font-semibold cursor-pointer"
-                      >
-                        Adjust Stock
-                      </button>
+                      >{t('industry_tools_adjust_stock')}</button>
                       <button
                         onClick={() => {
                           const discounted = (item.unitPrice * 0.75).toFixed(2);
@@ -883,9 +848,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                           );
                         }}
                         className="px-2 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-800 dark:text-amber-400 text-[10px] font-bold border border-amber-500/30 cursor-pointer"
-                      >
-                        25% Markdown (ETB)
-                      </button>
+                      >{t('industry_tools_25_markdown_etb')}</button>
                     </div>
                   </div>
                 ))}
@@ -908,23 +871,20 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                             : 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30'
                         }`}
                       >
-                        {dept.needsRestock ? 'Needs Restock' : 'Stocked'}
+                        {dept.needsRestock ? t('industry_tools_needs_restock') : t('industry_tools_stocked')}
                       </span>
                     </div>
                     <div className="text-[11px] text-slate-600 dark:text-slate-400 font-mono truncate">{dept.location}</div>
                     <div className="flex items-center justify-between text-[11px] text-slate-700 dark:text-slate-300 pt-1">
-                      <span>{dept.count} SKUs · {dept.totalUnits.toLocaleString()} units</span>
+                      <span>{fmt(t('industry_tools_skus_units'), [dept.count, dept.totalUnits.toLocaleString()])}</span>
                       <span className="font-mono font-bold text-amber-700 dark:text-amber-400">
-                        {Math.round(dept.valueETB).toLocaleString()} ETB
-                      </span>
+                        {fmt(t('barcode_etb'), [Math.round(dept.valueETB).toLocaleString()])}</span>
                     </div>
                   </div>
                   <button
                     onClick={() => onOpenCreatePO(dept.firstItem?.supplierId, dept.firstItem?.id)}
                     className="w-full mt-2 py-1.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700 text-[11px] font-semibold transition-colors cursor-pointer"
-                  >
-                    Generate Dept PO
-                  </button>
+                  >{t('industry_tools_generate_dept_po')}</button>
                 </div>
               ))}
             </div>
@@ -934,10 +894,8 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
           {activeSupermarketTab === 'shelftags' && (
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <span className="text-xs text-slate-700 dark:text-slate-300">
-                  Select an item to generate a customer-facing supermarket retail shelf tag in ETB:
-                </span>
-                <span className="text-xs font-mono text-slate-500 whitespace-nowrap">Standard 2&quot; &times; 1.25&quot; Shelf Talker</span>
+                <span className="text-xs text-slate-700 dark:text-slate-300">{t('industry_tools_select_an_item_to_generate')}</span>
+                <span className="text-xs font-mono text-slate-500 whitespace-nowrap">{t('industry_tools_standard_25_shelf_talker')}</span>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -956,7 +914,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                         <div className="truncate">{item.name}</div>
                         <div className="text-[10px] opacity-75 font-mono">{item.sku}</div>
                       </div>
-                      <div className="font-mono font-bold shrink-0">{item.unitPrice.toLocaleString()} ETB</div>
+                      <div className="font-mono font-bold shrink-0">{fmt(t('barcode_etb'), [item.unitPrice.toLocaleString()])}</div>
                     </div>
                   ))}
                 </div>
@@ -976,20 +934,20 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
 
                     <div className="my-4 flex items-baseline justify-between">
                       <div>
-                        <div className="text-[10px] uppercase font-bold text-slate-500">Retail Price</div>
+                        <div className="text-[10px] uppercase font-bold text-slate-500">{t('unit_price')}</div>
                         <div className="text-3xl font-black font-mono tracking-tight text-slate-950">
                           {selectedShelfTagItem.unitPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
-                          <span className="text-base font-bold">ETB</span>
+                          <span className="text-base font-bold">{t('currency_etb')}</span>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-[10px] text-slate-500">Unit Measure</div>
-                        <div className="text-xs font-mono font-bold uppercase">per {selectedShelfTagItem.unitOfMeasure}</div>
+                        <div className="text-[10px] text-slate-500">{t('industry_tools_unit_measure')}</div>
+                        <div className="text-xs font-mono font-bold uppercase">{fmt(t('industry_tools_per'), [selectedShelfTagItem.unitOfMeasure])}</div>
                       </div>
                     </div>
 
                     <div className="border-t pt-2 flex items-center justify-between text-[10px] font-mono text-slate-600">
-                      <span>SKU: {selectedShelfTagItem.sku}</span>
+                      <span>{fmt(t('industry_tools_sku'), [selectedShelfTagItem.sku])}</span>
                       <span>{selectedShelfTagItem.barcode}</span>
                     </div>
 
@@ -997,22 +955,18 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                       <button
                         onClick={() => onOpenBarcode(selectedShelfTagItem)}
                         className="py-2 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs hover:bg-amber-400 transition-colors cursor-pointer"
-                      >
-                        Generate QR Sticker
-                      </button>
+                      >{t('industry_tools_generate_qr_sticker')}</button>
                       <button
                         onClick={() => window.print()}
                         className="py-2 rounded-xl bg-slate-950 text-white font-bold text-xs hover:bg-slate-800 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                       >
                         <Printer className="w-3.5 h-3.5" />
-                        <span>Print Tag</span>
+                        <span>{t('industry_tools_print_tag')}</span>
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <div className="p-8 text-center text-xs text-slate-500 border border-dashed border-slate-300 dark:border-slate-800 rounded-2xl flex items-center justify-center">
-                    Select any item from the left to preview its retail shelf label.
-                  </div>
+                  <div className="p-8 text-center text-xs text-slate-500 border border-dashed border-slate-300 dark:border-slate-800 rounded-2xl flex items-center justify-center">{t('industry_tools_select_any_item_from_the')}</div>
                 )}
               </div>
             </div>
@@ -1041,9 +995,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
           {/* Morning Restock */}
           {activeMinimarketTab === 'restock' && (
             <div className="space-y-3">
-              <p className="text-xs text-slate-600 dark:text-slate-400">
-                Tap quick-replenish buttons for morning crate &amp; bakery deliveries, or issue a supplier PO if stock hits your reorder alert.
-              </p>
+              <p className="text-xs text-slate-600 dark:text-slate-400">{t('industry_tools_tap_quick_replenish_buttons_for')}</p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                 {items.slice(0, 6).map((item) => {
@@ -1069,8 +1021,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                             <span className="text-xs font-normal text-slate-500">{item.unitOfMeasure}</span>
                           </div>
                           <span className="text-[11px] font-mono font-bold text-amber-700 dark:text-amber-400">
-                            {item.unitPrice.toLocaleString()} ETB
-                          </span>
+                            {fmt(t('barcode_etb'), [item.unitPrice.toLocaleString()])}</span>
                         </div>
                       </div>
 
@@ -1113,11 +1064,9 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
           {activeMinimarketTab === 'express' && (
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <span className="text-xs text-slate-700 dark:text-slate-300 font-semibold">
-                  Express Counter Register: Tap an item to record an instant ETB sale and deduct shelf count.
-                </span>
+                <span className="text-xs text-slate-700 dark:text-slate-300 font-semibold">{t('industry_tools_express_counter_register_tap_an')}</span>
                 <div className="flex items-center gap-1.5 text-xs shrink-0">
-                  <span className="text-slate-600 dark:text-slate-400">Qty:</span>
+                  <span className="text-slate-600 dark:text-slate-400">{t('industry_tools_qty_2')}</span>
                   {[1, 2, 5, 10].map((q) => (
                     <button
                       key={q}
@@ -1150,11 +1099,9 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                     <div className="text-[10px] text-slate-500 font-mono mt-0.5">{item.sku}</div>
                     <div className="mt-2 flex items-center justify-between">
                       <span className="font-mono font-extrabold text-xs text-amber-700 dark:text-amber-400">
-                        {item.unitPrice.toLocaleString()} ETB
-                      </span>
+                        {fmt(t('barcode_etb'), [item.unitPrice.toLocaleString()])}</span>
                       <span className="text-[10px] font-mono text-slate-600 dark:text-slate-400">
-                        {item.quantity} left
-                      </span>
+                        {fmt(t('industry_tools_left'), [item.quantity])}</span>
                     </div>
                   </button>
                 ))}
@@ -1184,7 +1131,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
               active={activeStoreTab === 'moq'}
               onClick={() => setActiveStoreTab('moq')}
               icon={<Scale className="w-3.5 h-3.5" />}
-              label="MOQ & Bulk Tier Pricing (ETB)"
+              label={t('industry_tools_moq_bulk_tier_pricing_etb')}
             />
           </div>
 
@@ -1193,21 +1140,21 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <StatCard
-                  title="Live Depot Stock Load"
+                  title={t('industry_tools_live_depot_stock_load')}
                   value={`${totalDepotUnits.toLocaleString()} / ${totalDepotCapacity.toLocaleString()}`}
                   subtitle={`${depotUtilizationPct.toFixed(1)}% capacity occupied across ${warehouses.length} hubs`}
                   valueColor="amber"
                 />
                 <StatCard
-                  title="Wholesale Capital Tied in Stock"
+                  title={t('industry_tools_wholesale_capital_tied_in_stock')}
                   value={`${Math.round(totalDepotCostETB).toLocaleString()} ETB`}
                   subtitle="Cost basis across all depots"
                   valueColor="blue"
                 />
                 <StatCard
-                  title="Pending Inbound Freight POs"
+                  title={t('industry_tools_pending_inbound_freight_pos')}
                   value={`${inboundOrderedPOs.length} Shipments`}
-                  subtitle={inboundOrderedPOs[0]?.expectedDate ? `Next ETA: ${inboundOrderedPOs[0].expectedDate}` : 'No delayed shipments'}
+                  subtitle={inboundOrderedPOs[0]?.expectedDate ? `Next ETA: ${inboundOrderedPOs[0].expectedDate}` : t('industry_tools_no_delayed_shipments')}
                   valueColor="emerald"
                 />
               </div>
@@ -1234,8 +1181,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                         />
                       </div>
                       <div className="text-[11px] text-slate-600 dark:text-slate-400 font-mono">
-                        {whUnits.toLocaleString()} / {whCap.toLocaleString()} units ({wh.code})
-                      </div>
+                        {fmt(t('industry_tools_units'), [whUnits.toLocaleString(), whCap.toLocaleString(), wh.code])}</div>
                     </div>
                   );
                 })}
@@ -1249,16 +1195,12 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
               {inboundOrderedPOs.length === 0 ? (
                 <div className="p-6 rounded-2xl terit-glass-sub text-center space-y-2 text-xs">
                   <PackageCheck className="w-7 h-7 text-emerald-500 mx-auto" />
-                  <div className="font-bold text-slate-900 dark:text-white">All Inbound Shipments Received</div>
-                  <p className="text-slate-600 dark:text-slate-400">
-                    No pending ordered freight deliveries right now. Create a new supplier PO to schedule the next dock slot.
-                  </p>
+                  <div className="font-bold text-slate-900 dark:text-white">{t('industry_tools_all_inbound_shipments_received')}</div>
+                  <p className="text-slate-600 dark:text-slate-400">{t('industry_tools_no_pending_ordered_freight_deliveries')}</p>
                   <button
                     onClick={() => onOpenCreatePO()}
                     className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs cursor-pointer"
-                  >
-                    Create Inbound PO
-                  </button>
+                  >{t('industry_tools_create_inbound_po')}</button>
                 </div>
               ) : (
                 <div className="divide-y divide-slate-200 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden text-xs">
@@ -1269,16 +1211,14 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                     >
                       <div className="min-w-0 space-y-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-mono font-bold text-amber-700 dark:text-amber-400">
-                            Dock Bay #{idx + 1} · {po.poNumber}
+                          <span className="font-mono font-bold text-amber-700 dark:text-amber-400">{fmt(t('industry_tools_dock_bay'), [idx + 1, po.poNumber])}
                           </span>
                           <span className="font-bold text-slate-900 dark:text-white">{po.supplierName}</span>
                         </div>
                         <div className="text-slate-600 dark:text-slate-400 text-[11px] font-mono">
                           {po.items.map((li) => `${li.name} (${li.quantity})`).join(' · ')}
                         </div>
-                        <div className="text-[11px] font-mono text-slate-700 dark:text-slate-300">
-                          Total: <strong>{po.totalAmount.toLocaleString()} ETB</strong> · Expected:{' '}
+                        <div className="text-[11px] font-mono text-slate-700 dark:text-slate-300">{t('industry_tools_total')}{' '}<strong>{fmt(t('barcode_etb'), [po.totalAmount.toLocaleString()])}</strong>{' '}{t('industry_tools_expected')}{' '}
                           {po.expectedDate || 'Today'}
                         </div>
                       </div>
@@ -1287,7 +1227,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                         disabled={receivingPoId === po.id}
                         className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white font-bold text-xs whitespace-nowrap shrink-0 self-start sm:self-center cursor-pointer"
                       >
-                        {receivingPoId === po.id ? 'Posting to Ledger...' : 'Receive Delivery to Dock'}
+                        {receivingPoId === po.id ? t('industry_tools_posting_to_ledger') : t('industry_tools_receive_delivery_to_dock')}
                       </button>
                     </div>
                   ))}
@@ -1301,10 +1241,8 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
             <div className="p-4 rounded-2xl terit-glass-sub space-y-4 text-xs">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h4 className="font-bold text-slate-900 dark:text-white">Wholesale Quantity Tier Rebate Calculator (ETB)</h4>
-                  <p className="text-slate-600 dark:text-slate-400 text-[11px]">
-                    Calculate live B2B distributor contract rates based on your selected SKU:
-                  </p>
+                  <h4 className="font-bold text-slate-900 dark:text-white">{t('industry_tools_wholesale_quantity_tier_rebate_calculator')}</h4>
+                  <p className="text-slate-600 dark:text-slate-400 text-[11px]">{t('industry_tools_calculate_live_b2b_distributor_contract')}</p>
                 </div>
                 {items.length > 0 && (
                   <select
@@ -1314,8 +1252,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                   >
                     {items.map((it) => (
                       <option key={it.id} value={it.id}>
-                        {it.name} ({it.unitPrice.toLocaleString()} ETB)
-                      </option>
+                        {fmt(t('industry_tools_etb'), [it.name, it.unitPrice.toLocaleString()])}</option>
                     ))}
                   </select>
                 )}
@@ -1324,31 +1261,25 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
               {selectedMoqItem && (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="p-3.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1">
-                    <div className="font-bold text-slate-700 dark:text-slate-300">Tier 1: Standard Wholesale (1–9)</div>
+                    <div className="font-bold text-slate-700 dark:text-slate-300">{t('industry_tools_tier_standard_wholesale')}</div>
                     <div className="text-lg font-mono font-bold text-slate-900 dark:text-white">
-                      {selectedMoqItem.unitPrice.toLocaleString()} ETB / {selectedMoqItem.unitOfMeasure}
+                      {fmt(t('industry_tools_etb_2'), [selectedMoqItem.unitPrice.toLocaleString(), selectedMoqItem.unitOfMeasure])}
                     </div>
-                    <div className="text-[11px] text-slate-600 dark:text-slate-400">
-                      5-unit order: {(selectedMoqItem.unitPrice * 5).toLocaleString()} ETB (0% off)
-                    </div>
+                    <div className="text-[11px] text-slate-600 dark:text-slate-400">{fmt(t('industry_tools_unit_order_etb_off'), [(selectedMoqItem.unitPrice * 5).toLocaleString()])}</div>
                   </div>
                   <div className="p-3.5 bg-white dark:bg-slate-900 rounded-xl border border-amber-300 dark:border-amber-700/50 space-y-1">
-                    <div className="font-bold text-amber-700 dark:text-amber-400">Tier 2: Half Truckload (10–24)</div>
+                    <div className="font-bold text-amber-700 dark:text-amber-400">{t('industry_tools_tier_half_truckload_10_24')}</div>
                     <div className="text-lg font-mono font-bold text-amber-700 dark:text-amber-400">
-                      {Math.round(selectedMoqItem.unitPrice * 0.92).toLocaleString()} ETB / {selectedMoqItem.unitOfMeasure}
+                      {fmt(t('industry_tools_etb_2'), [Math.round(selectedMoqItem.unitPrice * 0.92).toLocaleString(), selectedMoqItem.unitOfMeasure])}
                     </div>
-                    <div className="text-[11px] text-slate-600 dark:text-slate-400">
-                      10-unit contract: {Math.round(selectedMoqItem.unitPrice * 0.92 * 10).toLocaleString()} ETB (8% off)
-                    </div>
+                    <div className="text-[11px] text-slate-600 dark:text-slate-400">{fmt(t('industry_tools_10_unit_contract_etb_off'), [Math.round(selectedMoqItem.unitPrice * 0.92 * 10).toLocaleString()])}</div>
                   </div>
                   <div className="p-3.5 bg-white dark:bg-slate-900 rounded-xl border border-emerald-300 dark:border-emerald-700/50 space-y-1">
-                    <div className="font-bold text-emerald-700 dark:text-emerald-400">Tier 3: Full Container (25+)</div>
+                    <div className="font-bold text-emerald-700 dark:text-emerald-400">{t('industry_tools_tier_full_container_25')}</div>
                     <div className="text-lg font-mono font-bold text-emerald-700 dark:text-emerald-400">
-                      {Math.round(selectedMoqItem.unitPrice * 0.82).toLocaleString()} ETB / {selectedMoqItem.unitOfMeasure}
+                      {fmt(t('industry_tools_etb_2'), [Math.round(selectedMoqItem.unitPrice * 0.82).toLocaleString(), selectedMoqItem.unitOfMeasure])}
                     </div>
-                    <div className="text-[11px] text-slate-600 dark:text-slate-400">
-                      25-unit contract: {Math.round(selectedMoqItem.unitPrice * 0.82 * 25).toLocaleString()} ETB (18% off)
-                    </div>
+                    <div className="text-[11px] text-slate-600 dark:text-slate-400">{fmt(t('industry_tools_25_unit_contract_etb_18'), [Math.round(selectedMoqItem.unitPrice * 0.82 * 25).toLocaleString()])}</div>
                   </div>
                 </div>
               )}
@@ -1378,7 +1309,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
           {activeShopTab === 'sizes' && (
             <div className="space-y-3">
               <p className="text-xs text-slate-600 dark:text-slate-400">
-                {t('boutique_sizes_desc') || 'Live SKU variant stock & size-run balance across your retail boutique:'}
+                {t('boutique_sizes_desc')}
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
                 {items.map((item) => {
@@ -1401,8 +1332,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                           </div>
                         </div>
                         <span className="font-mono font-bold text-amber-700 dark:text-amber-400 shrink-0">
-                          {item.unitPrice.toLocaleString()} ETB
-                        </span>
+                          {fmt(t('barcode_etb'), [item.unitPrice.toLocaleString()])}</span>
                       </div>
 
                       <div className="flex items-center justify-between pt-2 border-t border-slate-200/80 dark:border-slate-800">
@@ -1421,10 +1351,10 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                             }`}
                           >
                             {item.quantity <= item.minStockAlert
-                              ? t('status_critical_low') || 'Low Run'
+                              ? t('status_critical_low')
                               : item.quantity >= item.minStockAlert * 2.5
-                              ? t('status_overstocked') || 'Overstocked'
-                              : t('status_healthy') || 'Balanced'}
+                              ? t('status_overstocked')
+                              : t('status_healthy')}
                           </span>
                         </div>
                         <button
@@ -1435,7 +1365,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                           }
                           className="px-2.5 py-1 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-950 font-bold text-[10px] cursor-pointer"
                         >
-                          {item.quantity <= item.minStockAlert ? 'Reorder' : 'Adjust'}
+                          {item.quantity <= item.minStockAlert ? t('nav_reorder') : t('industry_tools_adjust')}
                         </button>
                       </div>
                     </div>
@@ -1450,10 +1380,10 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <h4 className="font-bold text-slate-900 dark:text-white">
-                    {t('clearance_sim_title') || 'Clearance Markdown Simulator'}
+                    {t('clearance_sim_title')}
                   </h4>
                   <p className="text-[11px] text-slate-600 dark:text-slate-400">
-                    {t('clearance_sim_desc') || 'Calculate ETB cash liquidity recovered from slow-moving or broken-size stock:'}
+                    {t('clearance_sim_desc')}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5">
@@ -1467,7 +1397,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                           : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700'
                       }`}
                     >
-                      {pct}% {t('off_label') || 'OFF'}
+                      {pct}% {t('off_label')}
                     </button>
                   ))}
                 </div>
@@ -1476,29 +1406,28 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
                 <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-center">
                   <div className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold">
-                    {t('discount_selected_label') || 'Discount Selected'}
+                    {t('discount_selected_label')}
                   </div>
                   <div className="text-2xl font-bold font-mono text-amber-700 dark:text-amber-400 mt-1">
-                    {clearanceDiscount}% {t('off_label') || 'OFF'}
+                    {clearanceDiscount}% {t('off_label')}
                   </div>
                 </div>
                 <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-center">
                   <div className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold">
-                    {t('liquidity_released_label') || 'Projected Clearance Revenue'}
+                    {t('liquidity_released_label')}
                   </div>
                   <div className="text-2xl font-bold font-mono text-emerald-700 dark:text-emerald-400 mt-1">
-                    {Math.round(clearanceLiquidity).toLocaleString()} ETB
-                  </div>
+                    {fmt(t('barcode_etb'), [Math.round(clearanceLiquidity).toLocaleString()])}</div>
                   <div className="text-[10px] text-slate-500 mt-0.5">
-                    {t('based_on_slow_movers') || 'Across clearance candidates'}
+                    {t('based_on_slow_movers')}
                   </div>
                 </div>
                 <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-center">
                   <div className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold">
-                    {t('shelf_space_label') || 'Shelf Space Reclaimed'}
+                    {t('shelf_space_label')}
                   </div>
                   <div className="text-2xl font-bold font-mono text-blue-700 dark:text-blue-400 mt-1">
-                    {clearanceUnits} {t('units_label') || 'units'}
+                    {clearanceUnits} {t('units_label')}
                   </div>
                 </div>
               </div>
@@ -1540,13 +1469,11 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                 <div className="p-4 rounded-2xl terit-glass-sub space-y-3 text-xs md:col-span-1">
                   <h4 className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                     <Scale className="w-4 h-4 text-amber-500" />
-                    <span>Rebar Specification</span>
+                    <span>{t('industry_tools_rebar_specification')}</span>
                   </h4>
 
                   <div>
-                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">
-                      Diameter (ሚሊሜትር)
-                    </label>
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">{t('industry_tools_diameter')}</label>
                     <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
                       {[8, 10, 12, 14, 16, 20, 24].map((d) => (
                         <button
@@ -1563,14 +1490,12 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                         </button>
                       ))}
                     </div>
-                    <div className="text-[10px] text-slate-600 dark:text-slate-400 mt-1 font-mono">
-                      Unit weight: {weightPer12mBar} kg / 12m bar (~{barsPerTon} bars/ton)
-                    </div>
+                    <div className="text-[10px] text-slate-600 dark:text-slate-400 mt-1 font-mono">{fmt(t('industry_tools_unit_weight_kg_12m_bar'), [weightPer12mBar, barsPerTon])}</div>
                   </div>
 
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <label className="text-slate-700 dark:text-slate-300 font-semibold">Input Mode</label>
+                      <label className="text-slate-700 dark:text-slate-300 font-semibold">{t('industry_tools_input_mode')}</label>
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
@@ -1580,9 +1505,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                               ? 'bg-amber-500/20 text-amber-800 dark:text-amber-300 font-bold'
                               : 'text-slate-500'
                           }`}
-                        >
-                          Bars (ቁጥር)
-                        </button>
+                        >{t('industry_tools_bars')}</button>
                         <span>·</span>
                         <button
                           type="button"
@@ -1592,9 +1515,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                               ? 'bg-amber-500/20 text-amber-800 dark:text-amber-300 font-bold'
                               : 'text-slate-500'
                           }`}
-                        >
-                          Tons (ቶን)
-                        </button>
+                        >{t('industry_tools_tons')}</button>
                       </div>
                     </div>
                     <input
@@ -1608,9 +1529,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">
-                      Agreed Rate Per 12m Bar (ETB)
-                    </label>
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">{t('industry_tools_agreed_rate_per_12m_bar')}</label>
                     <input
                       type="number"
                       min="100"
@@ -1625,53 +1544,48 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                 <div className="md:col-span-2 space-y-3 min-w-0">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="min-w-0 p-3.5 rounded-2xl terit-glass-sub flex flex-col justify-between">
-                      <span className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold">Total Steel Bars</span>
+                      <span className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold">{t('industry_tools_total_steel_bars')}</span>
                       <div className="text-xl sm:text-2xl font-black font-mono text-slate-900 dark:text-white mt-1 tabular-nums">
                         {totalRebarBars.toLocaleString()}{' '}
-                        <span className="text-xs font-normal text-slate-500 font-sans">Bars (12m)</span>
+                        <span className="text-xs font-normal text-slate-500 font-sans">{t('industry_tools_bars_12m')}</span>
                       </div>
                       <div className="text-[10px] text-slate-500 mt-1 font-mono">
-                        {rebarDiameter}mm Grade 60 Rebar
-                      </div>
+                        {fmt(t('industry_tools_mm_grade_60_rebar'), [rebarDiameter])}</div>
                     </div>
 
                     <div className="min-w-0 p-3.5 rounded-2xl terit-glass-sub flex flex-col justify-between">
-                      <span className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold">Total Net Weight</span>
+                      <span className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold">{t('industry_tools_total_net_weight')}</span>
                       <div className="text-xl sm:text-2xl font-black font-mono text-blue-700 dark:text-blue-400 mt-1 tabular-nums">
                         {totalRebarTons}{' '}
-                        <span className="text-xs font-normal text-slate-500 font-sans">Tons</span>
+                        <span className="text-xs font-normal text-slate-500 font-sans">{t('industry_tools_tons_2')}</span>
                       </div>
                       <div className="text-[10px] text-slate-600 dark:text-slate-400 mt-1 font-mono">
-                        {totalRebarQuintals} Quintals ({totalRebarWeightKg.toLocaleString()} kg)
-                      </div>
+                        {fmt(t('industry_tools_quintals_kg'), [totalRebarQuintals, totalRebarWeightKg.toLocaleString()])}</div>
                     </div>
 
                     <div className="min-w-0 p-3.5 rounded-2xl terit-glass-sub flex flex-col justify-between">
-                      <span className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold">Estimated Batch Value</span>
+                      <span className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold">{t('industry_tools_estimated_batch_value')}</span>
                       <div className="text-xl sm:text-2xl font-black font-mono text-amber-700 dark:text-amber-400 mt-1 tabular-nums">
                         {estimatedRebarCost.toLocaleString()}{' '}
-                        <span className="text-xs font-normal text-slate-500 font-sans">ETB</span>
+                        <span className="text-xs font-normal text-slate-500 font-sans">{t('currency_etb')}</span>
                       </div>
                       <div className="text-[10px] text-slate-600 dark:text-slate-400 mt-1 font-mono">
-                        {(estimatedRebarCost / (totalRebarTons || 1)).toLocaleString(undefined, { maximumFractionDigits: 0 })} ETB / Ton
-                      </div>
+                        {fmt(t('industry_tools_etb_ton'), [(estimatedRebarCost / (totalRebarTons || 1)).toLocaleString(undefined, { maximumFractionDigits: 0 })])}</div>
                     </div>
                   </div>
 
                   <div className="p-3.5 rounded-2xl terit-glass-sub space-y-2 text-xs">
                     <div className="font-bold text-slate-900 dark:text-slate-200 flex flex-wrap items-center justify-between gap-2">
-                      <span>Contractor Structural Fabrication Estimator</span>
-                      <span className="text-[10px] font-mono text-slate-500">Ethiopian Standard Code</span>
+                      <span>{t('industry_tools_contractor_structural_fabrication_estimator')}</span>
+                      <span className="text-[10px] font-mono text-slate-500">{t('industry_tools_ethiopian_standard_code')}</span>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 text-[11px]">
                       <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-                        <span className="text-slate-600 dark:text-slate-400 block">Cutting Scrap Loss (4% Allowance):</span>
-                        <strong className="text-rose-600 dark:text-rose-400 font-mono text-xs">{scrapLossKg} kg</strong> scrap buffer
-                      </div>
+                        <span className="text-slate-600 dark:text-slate-400 block">{t('industry_tools_cutting_scrap_loss_allowance')}</span>
+                        <strong className="text-rose-600 dark:text-rose-400 font-mono text-xs">{scrapLossKg} kg</strong>{' '}{t('industry_tools_scrap_buffer')}</div>
                       <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-                        <span className="text-slate-600 dark:text-slate-400 block">Recommended Tying Wire (የማሰሪያ ሽቦ):</span>
-                        <strong className="text-slate-900 dark:text-white font-mono text-xs">{tyingWireKg} kg</strong> wire required
-                      </div>
+                        <span className="text-slate-600 dark:text-slate-400 block">{t('industry_tools_recommended_tying_wire')}</span>
+                        <strong className="text-slate-900 dark:text-white font-mono text-xs">{tyingWireKg} kg</strong>{' '}{t('industry_tools_wire_required')}</div>
                     </div>
 
                     <div className="flex flex-wrap items-center justify-end gap-2 pt-2">
@@ -1679,16 +1593,12 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                         type="button"
                         onClick={handleDeductRebar}
                         className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-colors cursor-pointer shadow-xs whitespace-nowrap"
-                      >
-                        Deduct {totalRebarBars} Bars from Inventory
-                      </button>
+                      >{fmt(t('industry_tools_deduct_bars_from_inventory'), [totalRebarBars])}</button>
                       <button
                         type="button"
                         onClick={() => onOpenCreatePO()}
                         className="px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-semibold text-xs hover:bg-slate-100 transition-colors cursor-pointer whitespace-nowrap"
-                      >
-                        Issue Procurement PO
-                      </button>
+                      >{t('industry_tools_issue_procurement_po')}</button>
                     </div>
                   </div>
                 </div>
@@ -1705,7 +1615,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                 <div className="p-4 rounded-2xl terit-glass-sub space-y-3">
                   <h4 className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                     <FileText className="w-4 h-4 text-amber-500" />
-                    <span>Project Site Delivery Details</span>
+                    <span>{t('industry_tools_project_site_delivery_details')}</span>
                   </h4>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -1763,9 +1673,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">
-                      Dispatch Vehicle Type &amp; Legal Axle Capacity
-                    </label>
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">{t('industry_tools_dispatch_vehicle_type_legal_axle')}</label>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       {[
                         { key: 'isuzu' as const, label: 'Isuzu FSR/NPR', cap: '11.0 Tons Max' },
@@ -1791,9 +1699,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
                     <div>
-                      <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">
-                        Cement (50kg Bags)
-                      </label>
+                      <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">{t('industry_tools_cement_50kg_bags')}</label>
                       <input
                         type="number"
                         min="0"
@@ -1804,9 +1710,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                     </div>
 
                     <div>
-                      <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">
-                        HCB Blocks (15/20cm)
-                      </label>
+                      <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">{t('industry_tools_hcb_blocks_15_20cm')}</label>
                       <input
                         type="number"
                         min="0"
@@ -1822,7 +1726,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                 <div className="p-4 rounded-2xl terit-glass-sub flex flex-col justify-between space-y-3">
                   <div className="space-y-3">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <h4 className="font-bold text-slate-900 dark:text-white">Axle Load &amp; Weight Verification</h4>
+                      <h4 className="font-bold text-slate-900 dark:text-white">{t('industry_tools_axle_load_weight_verification')}</h4>
                       <span
                         className={`text-[10px] font-bold px-2 py-0.5 rounded-full font-mono uppercase whitespace-nowrap ${
                           isPayloadOverweight
@@ -1836,14 +1740,13 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
 
                     <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
                       <div className="flex items-center justify-between text-xs font-mono">
-                        <span className="text-slate-600 dark:text-slate-400">Gross Payload:</span>
+                        <span className="text-slate-600 dark:text-slate-400">{t('industry_tools_gross_payload')}</span>
                         <strong className="text-slate-900 dark:text-white">
-                          {(totalPayloadWeightKg / 1000).toFixed(2)} Tons ({totalPayloadWeightKg.toLocaleString()} kg)
-                        </strong>
+                          {fmt(t('industry_tools_tons_kg'), [(totalPayloadWeightKg / 1000).toFixed(2), totalPayloadWeightKg.toLocaleString()])}</strong>
                       </div>
                       <div className="flex items-center justify-between text-xs font-mono">
-                        <span className="text-slate-600 dark:text-slate-400">Legal Vehicle Rating:</span>
-                        <strong className="text-slate-900 dark:text-white">{(maxAllowedKg / 1000).toFixed(1)} Tons</strong>
+                        <span className="text-slate-600 dark:text-slate-400">{t('industry_tools_legal_vehicle_rating')}</span>
+                        <strong className="text-slate-900 dark:text-white">{fmt(t('industry_tools_tons_3'), [(maxAllowedKg / 1000).toFixed(1)])}</strong>
                       </div>
                       <div className="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
                         <div
@@ -1858,11 +1761,9 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                     <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-slate-800 dark:text-slate-300 text-[11px] space-y-1">
                       <div className="font-bold flex items-center gap-1 text-amber-800 dark:text-amber-400">
                         <HardHat className="w-3.5 h-3.5" />
-                        <span>Site Breakage Allowance</span>
+                        <span>{t('industry_tools_site_breakage_allowance')}</span>
                       </div>
-                      <p>
-                        Include <strong>+{recommendedBreakageBlocks} blocks</strong> (standard 3% offloading and rough transit breakage allowance).
-                      </p>
+                      <p>{t('industry_tools_include')}{' '}<strong>{fmt(t('industry_tools_blocks'), [recommendedBreakageBlocks])}</strong>{' '}{t('industry_tools_standard_offloading_and_rough_transit')}</p>
                     </div>
                   </div>
 
@@ -1873,7 +1774,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                       className="w-full sm:w-auto px-4 py-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-950 font-bold text-xs hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap"
                     >
                       <FileText className="w-3.5 h-3.5" />
-                      <span>{showDispatchPass ? 'Hide Dispatch Pass' : 'View Dispatch Pass'}</span>
+                      <span>{showDispatchPass ? t('industry_tools_hide_dispatch_pass') : t('industry_tools_view_dispatch_pass')}</span>
                     </button>
                     <button
                       type="button"
@@ -1881,7 +1782,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                       className="w-full sm:w-auto px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap"
                     >
                       <Check className="w-3.5 h-3.5" />
-                      <span>Deduct from Yard Stock</span>
+                      <span>{t('industry_tools_deduct_from_yard_stock')}</span>
                     </button>
                   </div>
                 </div>
@@ -1891,11 +1792,8 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                 <div className="p-5 rounded-3xl bg-white dark:bg-slate-950 border-2 border-dashed border-amber-500/40 space-y-3 font-mono text-xs">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
                     <div className="min-w-0">
-                      <div className="font-extrabold text-sm text-slate-900 dark:text-white uppercase tracking-wider">
-                        CONSTRUCTION SITE DELIVERY DISPATCH PASS (የርክክብ ማዘዣ)
-                      </div>
-                      <div className="text-[10px] text-slate-500">
-                        PASS REF: DSP-{new Date().getFullYear()}-{Math.floor(1000 + Math.random() * 9000)} · {new Date().toLocaleDateString()}
+                      <div className="font-extrabold text-sm text-slate-900 dark:text-white uppercase tracking-wider">{t('industry_tools_construction_site_delivery_dispatch_pass')}</div>
+                      <div className="text-[10px] text-slate-500">{fmt(t('industry_tools_pass_ref_dsp'), [new Date().getFullYear(), Math.floor(1000 + Math.random() * 9000), new Date().toLocaleDateString()])}
                       </div>
                     </div>
                     <button
@@ -1909,7 +1807,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                       className="px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 font-sans text-xs font-semibold flex items-center gap-1 self-start sm:self-center whitespace-nowrap cursor-pointer"
                     >
                       {copiedPass ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-                      <span>{copiedPass ? 'Copied' : 'Copy Pass'}</span>
+                      <span>{copiedPass ? t('barcode_copied_btn') : t('industry_tools_copy_pass')}</span>
                     </button>
                   </div>
 
@@ -1933,11 +1831,11 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                   </div>
 
                   <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs">
-                    <div className="font-bold mb-1 text-slate-800 dark:text-slate-200">Loaded Yard Inventory:</div>
+                    <div className="font-bold mb-1 text-slate-800 dark:text-slate-200">{t('industry_tools_loaded_yard_inventory')}</div>
                     <div className="space-y-0.5">
-                      <div>• Cement 50kg Bags: <strong>{dispatchCementQty} bags</strong> ({(dispatchCementQty * 50 / 1000).toFixed(2)} Tons)</div>
-                      <div>• Hollow Concrete Blocks 15cm: <strong>{dispatchBlockQty} pcs</strong> + {recommendedBreakageBlocks} buffer pcs</div>
-                      <div>• Total Payload: <strong>{(totalPayloadWeightKg / 1000).toFixed(2)} Metric Tons</strong></div>
+                      <div>{t('industry_tools_cement_50kg_bags_2')}{' '}<strong>{fmt(t('industry_tools_bags'), [dispatchCementQty])}</strong> ({(dispatchCementQty * 50 / 1000).toFixed(2)}{' '}{t('industry_tools_tons_4')}</div>
+                      <div>{t('industry_tools_hollow_concrete_blocks_15cm')}{' '}<strong>{fmt(t('industry_tools_pcs'), [dispatchBlockQty])}</strong> + {recommendedBreakageBlocks}{' '}{t('industry_tools_buffer_pcs')}</div>
+                      <div>{t('industry_tools_total_payload')}{' '}<strong>{fmt(t('industry_tools_metric_tons'), [(totalPayloadWeightKg / 1000).toFixed(2)])}</strong></div>
                     </div>
                   </div>
                 </div>
@@ -1952,7 +1850,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h4 className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                     <Layers className="w-4 h-4 text-amber-500" />
-                    <span>Hydraulic Cement Age &amp; Ambient Moisture Sentinel</span>
+                    <span>{t('industry_tools_hydraulic_cement_age_ambient_moisture')}</span>
                   </h4>
                   <span
                     className={`text-[10px] font-bold px-2 py-0.5 rounded-full font-mono uppercase ${
@@ -1966,18 +1864,18 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                     }`}
                   >
                     {cementBagDays <= 30
-                      ? '100% Strength (Prime)'
+                      ? t('industry_tools_100_strength_prime')
                       : cementBagDays <= 60
-                      ? '95% Strength (Good)'
+                      ? t('industry_tools_95_strength_good')
                       : cementBagDays <= 90
-                      ? '85% Strength (Plaster Only)'
-                      : 'Caked / Test Required'}
+                      ? t('industry_tools_85_strength_plaster_only')
+                      : t('industry_tools_caked_test_required')}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-                    <label className="text-slate-600 dark:text-slate-400 font-semibold block mb-1">Batch Storage Age (Days):</label>
+                    <label className="text-slate-600 dark:text-slate-400 font-semibold block mb-1">{t('industry_tools_batch_storage_age_days')}</label>
                     <input
                       type="number"
                       min="1"
@@ -1987,12 +1885,12 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                       className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 font-mono text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-amber-500"
                     />
                     <div className="text-[10px] text-slate-500 mt-1">
-                      {cementBagDays <= 60 ? 'Suitable for structural concrete' : 'Restrict to non-structural mortar'}
+                      {cementBagDays <= 60 ? t('industry_tools_suitable_for_structural_concrete') : t('industry_tools_restrict_to_non_structural_mortar')}
                     </div>
                   </div>
 
                   <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-                    <label className="text-slate-600 dark:text-slate-400 font-semibold block mb-1">Stack Height (Bags High):</label>
+                    <label className="text-slate-600 dark:text-slate-400 font-semibold block mb-1">{t('industry_tools_stack_height_bags_high')}</label>
                     <input
                       type="number"
                       min="1"
@@ -2003,15 +1901,15 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                     />
                     <div className="text-[10px] mt-1 font-semibold">
                       {palletHeightBags <= 10 ? (
-                        <span className="text-emerald-700 dark:text-emerald-400">Safe stack (&le;10 bags)</span>
+                        <span className="text-emerald-700 dark:text-emerald-400">{t('industry_tools_safe_stack_10_bags')}</span>
                       ) : (
-                        <span className="text-rose-600 dark:text-rose-400">Exceeds 10 bags (compaction risk)</span>
+                        <span className="text-rose-600 dark:text-rose-400">{t('industry_tools_exceeds_10_bags_compaction_risk')}</span>
                       )}
                     </div>
                   </div>
 
                   <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
-                    <label className="text-slate-600 dark:text-slate-400 font-semibold block mb-1">Moisture Tarp Protection:</label>
+                    <label className="text-slate-600 dark:text-slate-400 font-semibold block mb-1">{t('industry_tools_moisture_tarp_protection')}</label>
                     <label className="flex items-center gap-2 cursor-pointer mt-1">
                       <input
                         type="checkbox"
@@ -2019,9 +1917,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                         onChange={(e) => setMoistureCoverChecked(e.target.checked)}
                         className="rounded text-amber-500 focus:ring-amber-500 w-4 h-4"
                       />
-                      <span className="font-semibold text-slate-800 dark:text-slate-300 text-xs">
-                        Raised Wooden Pallet + Heavy Tarp
-                      </span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-300 text-xs">{t('industry_tools_raised_wooden_pallet_heavy_tarp')}</span>
                     </label>
                   </div>
                 </div>
@@ -2039,13 +1935,13 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
               active={activeOtherTab === 'transfer'}
               onClick={() => setActiveOtherTab('transfer')}
               icon={<ArrowRightLeft className="w-3.5 h-3.5" />}
-              label="Multi-Branch Stock Transfer"
+              label={t('industry_tools_multi_branch_stock_transfer')}
             />
             <TabButton
               active={activeOtherTab === 'landed'}
               onClick={() => setActiveOtherTab('landed')}
               icon={<Calculator className="w-3.5 h-3.5" />}
-              label="Landed Unit Cost Calculator (ETB)"
+              label={t('industry_tools_landed_unit_cost_calculator_etb')}
             />
           </div>
 
@@ -2055,25 +1951,19 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                 <div>
                   <h4 className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                     <Building className="w-4 h-4 text-amber-500" />
-                    <span>Branch &amp; Department Requisition Transfer</span>
+                    <span>{t('industry_tools_branch_department_requisition_transfer')}</span>
                   </h4>
-                  <p className="text-[11px] text-slate-600 dark:text-slate-400">
-                    Move stock cleanly between warehouses/branches and record the transfer directly in the ledger.
-                  </p>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-400">{t('industry_tools_move_stock_cleanly_between_warehouses')}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => onOpenCreatePO()}
                     className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs cursor-pointer"
-                  >
-                    Create PO
-                  </button>
+                  >{t('reorder_create_po')}</button>
                   <button
                     onClick={() => onOpenQuickAdjust()}
                     className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-semibold text-xs cursor-pointer"
-                  >
-                    Manual Adjust
-                  </button>
+                  >{t('industry_tools_manual_adjust')}</button>
                 </div>
               </div>
 
@@ -2081,9 +1971,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    SKU to Allocate
-                  </label>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">{t('industry_tools_sku_to_allocate')}</label>
                   <select
                     value={transferItem?.id || ''}
                     onChange={(e) => setTransferItemId(e.target.value)}
@@ -2098,9 +1986,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Destination Branch / Depot
-                  </label>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">{t('industry_tools_destination_branch_depot')}</label>
                   <select
                     value={transferDestLocId}
                     onChange={(e) => setTransferDestLocId(e.target.value)}
@@ -2115,9 +2001,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Transfer Quantity
-                  </label>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">{t('transfer_quantity')}</label>
                   <div className="flex items-center gap-2">
                     <input
                       type="number"
@@ -2129,9 +2013,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                     <button
                       onClick={handleBranchTransfer}
                       className="px-4 py-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-950 font-bold text-xs whitespace-nowrap cursor-pointer"
-                    >
-                      Dispatch
-                    </button>
+                    >{t('industry_tools_dispatch')}</button>
                   </div>
                 </div>
               </div>
@@ -2141,15 +2023,13 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
           {activeOtherTab === 'landed' && (
             <div className="p-4 rounded-2xl terit-glass-sub space-y-4">
               <div>
-                <h4 className="font-bold text-slate-900 dark:text-white">Import &amp; Inter-Regional Landed Cost Calculator (ETB)</h4>
-                <p className="text-[11px] text-slate-600 dark:text-slate-400">
-                  Factor supplier invoice price, freight, and customs handling to set profitable ETB selling prices.
-                </p>
+                <h4 className="font-bold text-slate-900 dark:text-white">{t('industry_tools_import_inter_regional_landed_cost')}</h4>
+                <p className="text-[11px] text-slate-600 dark:text-slate-400">{t('industry_tools_factor_supplier_invoice_price_freight')}</p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
                 <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Factory Unit Cost (ETB)</label>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">{t('industry_tools_factory_unit_cost_etb')}</label>
                   <input
                     type="number"
                     min="1"
@@ -2159,7 +2039,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Total Freight (ETB)</label>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">{t('industry_tools_total_freight_etb')}</label>
                   <input
                     type="number"
                     min="0"
@@ -2169,7 +2049,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Customs &amp; Handling (ETB)</label>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">{t('industry_tools_customs_handling_etb')}</label>
                   <input
                     type="number"
                     min="0"
@@ -2179,7 +2059,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Batch Qty</label>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">{t('industry_tools_batch_qty')}</label>
                   <input
                     type="number"
                     min="1"
@@ -2189,7 +2069,7 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Target Margin (%)</label>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">{t('industry_tools_target_margin')}</label>
                   <input
                     type="number"
                     min="1"
@@ -2203,12 +2083,12 @@ export const IndustryToolsPanel: React.FC<IndustryToolsPanelProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <StatCard
-                  title="Freight + Customs Overhead / Unit"
+                  title={t('industry_tools_freight_customs_overhead_unit')}
                   value={`${unitOverheadETB.toFixed(1)} ETB`}
                   subtitle="Allocated evenly per unit"
                 />
                 <StatCard
-                  title="True Landed Unit Cost"
+                  title={t('industry_tools_true_landed_unit_cost')}
                   value={`${trueLandedUnitETB.toFixed(1)} ETB`}
                   subtitle="Breakeven warehouse cost"
                   valueColor="amber"

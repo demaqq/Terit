@@ -14,6 +14,7 @@ import {
 import { InventoryItem } from '../types/inventory';
 import { useInventory } from '../context/InventoryContext';
 import { ledgerDirection } from '../lib/ledger';
+import { fmt } from '../i18n/fmt';
 
 interface ItemDetailsModalProps {
   isOpen: boolean;
@@ -113,9 +114,9 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
           <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-3">
             <span className="text-[10px] text-slate-500 uppercase font-mono">{t('unit_price')}</span>
             <div className="text-lg font-bold font-mono text-amber-700 dark:text-amber-400 mt-0.5">
-              {item.unitPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-xs font-normal">ETB</span>
+              {item.unitPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-xs font-normal">{t('currency_etb')}</span>
             </div>
-            <span className="text-[10px] text-slate-600 dark:text-slate-400 font-mono">{t('item_details_cost_label')}: {item.costPrice.toFixed(2)} ETB</span>
+            <span className="text-[10px] text-slate-600 dark:text-slate-400 font-mono">{fmt(t('dashboard_etb'), [t('item_details_cost_label'), item.costPrice.toFixed(2)])}</span>
           </div>
 
           <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-3">
@@ -123,15 +124,15 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
             <div className="text-lg font-bold font-mono text-emerald-700 dark:text-emerald-400 mt-0.5">
               {unitMargin.toFixed(1)}%
             </div>
-            <span className="text-[10px] text-slate-600 dark:text-slate-400 font-mono">+{(item.unitPrice - item.costPrice).toFixed(2)} ETB/{t('per_unit')}</span>
+            <span className="text-[10px] text-slate-600 dark:text-slate-400 font-mono">{fmt(t('item_details_etb'), [(item.unitPrice - item.costPrice).toFixed(2), t('per_unit')])}</span>
           </div>
 
           <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-3">
             <span className="text-[10px] text-slate-500 uppercase font-mono">{t('valuation')}</span>
             <div className="text-lg font-bold font-mono mt-0.5">
-              {totalValuation.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} <span className="text-xs font-normal">ETB</span>
+              {totalValuation.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} <span className="text-xs font-normal">{t('currency_etb')}</span>
             </div>
-            <span className="text-[10px] text-slate-600 dark:text-slate-400 font-mono">{t('cost_label')}: {totalCost.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} ETB</span>
+            <span className="text-[10px] text-slate-600 dark:text-slate-400 font-mono">{fmt(t('dashboard_etb'), [t('cost_label'), totalCost.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })])}</span>
           </div>
         </div>
 

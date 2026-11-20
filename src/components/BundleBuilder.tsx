@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
 import { BundleComponent } from '../types/inventory';
+import { fmt } from '../i18n/fmt';
 
 export const BundleBuilder: React.FC = () => {
   const {
@@ -475,11 +476,11 @@ const CreateBundleForm: React.FC<{
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-slate-200/70 dark:border-slate-700/60">
         <p className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
-          {t('bundle_cost_summary')}: <span className="font-semibold text-slate-800 dark:text-slate-200">{costPrice.toLocaleString()} ETB</span>
+          {t('bundle_cost_summary')}: <span className="font-semibold text-slate-800 dark:text-slate-200">{fmt(t('barcode_etb'), [costPrice.toLocaleString()])}</span>
           {componentRetail > 0 && (
             <>
               {' · '}
-              {t('bundle_retail_summary')}: <span className="font-semibold text-slate-800 dark:text-slate-200">{componentRetail.toLocaleString()} ETB</span>
+              {t('bundle_retail_summary')}: <span className="font-semibold text-slate-800 dark:text-slate-200">{fmt(t('barcode_etb'), [componentRetail.toLocaleString()])}</span>
             </>
           )}
         </p>

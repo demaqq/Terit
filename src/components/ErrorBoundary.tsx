@@ -1,5 +1,6 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RotateCcw } from 'lucide-react';
+import { translateStatic as tr } from '../i18n/translations';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -40,9 +41,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             <div className="w-12 h-12 rounded-2xl bg-rose-500/15 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto">
               <AlertTriangle className="w-6 h-6" />
             </div>
-            <h2 className="text-lg font-bold">Something went wrong</h2>
+            <h2 className="text-lg font-bold">{tr('error_boundary_title')}</h2>
             <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              We ran into an unexpected data or session issue. Reloading will restore your session safely.
+              {tr('error_boundary_body')}
             </p>
             <button
               type="button"
@@ -50,7 +51,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md shadow-amber-500/20 cursor-pointer"
             >
               <RotateCcw className="w-4 h-4" />
-              <span>Reload Workspace</span>
+              <span>{tr('error_boundary_reload')}</span>
             </button>
           </div>
         </div>

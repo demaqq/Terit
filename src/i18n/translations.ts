@@ -123,3 +123,17 @@ export async function loadLocale(lang: SupportedLanguage): Promise<Record<string
   loadedLocales[lang] = mod.default;
   return mod.default;
 }
+
+/**
+ * Translate outside the InventoryProvider (error screen, toasts, loading fallback):
+ * uses the saved language and whatever locale is already loaded, else English.
+ */
+export function translateStatic(key: string): string {
+  let lang: SupportedLanguage = 'en';
+  try {
+    lang = (localStorage.getItem('terit_language') as SupportedLanguage) || 'en';
+  } catch {
+    // storage unavailable: English
+  }
+  return loadedLocales[lang]?.[key] || en[key] || key;
+}

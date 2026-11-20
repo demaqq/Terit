@@ -27,6 +27,7 @@ import {
   isCompanyProfileComplete,
   validateCompanyProfileCriteria,
 } from '../lib/validation';
+import { fmt } from '../i18n/fmt';
 
 interface OnboardingModalProps {
   isOpen: boolean;
@@ -657,8 +658,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                 <div className="text-xs font-mono tabular-nums">
                   <span className="text-slate-600 dark:text-slate-400">{t('plan_selected_prefix')} </span>
                   <strong className="text-amber-700 dark:text-amber-400 font-bold">
-                    {t(currentModel.titleKey)} · 0 ETB ({t('free_plan')})
-                  </strong>
+                    {fmt(t('onboarding_etb'), [t(currentModel.titleKey), t('free_plan')])}</strong>
                 </div>
 
                 <button
@@ -727,7 +727,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                         setCompanyName(e.target.value);
                         clearFieldError('companyName');
                       }}
-                      placeholder={t('onboarding_company_placeholder') || 'Enter your business name'}
+                      placeholder={t('onboarding_company_placeholder')}
                       className={`w-full px-3.5 py-2.5 rounded-xl border bg-white dark:bg-slate-950 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-amber-500 focus:outline-hidden ${
                         fieldErrors.companyName
                           ? 'border-rose-500 dark:border-rose-500'
@@ -753,7 +753,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                         setContactName(e.target.value);
                         clearFieldError('contactName');
                       }}
-                      placeholder={t('onboarding_contact_placeholder') || 'Enter contact name'}
+                      placeholder={t('onboarding_contact_placeholder')}
                       className={`w-full px-3.5 py-2.5 rounded-xl border bg-white dark:bg-slate-950 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-amber-500 focus:outline-hidden ${
                         fieldErrors.contactName
                           ? 'border-rose-500 dark:border-rose-500'
@@ -781,7 +781,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                         setPhone(e.target.value);
                         clearFieldError('phone');
                       }}
-                      placeholder={t('phone_placeholder') || '+251 9XX XXX XXXX'}
+                      placeholder={t('phone_placeholder')}
                       className={`w-full px-3.5 py-2.5 rounded-xl border bg-white dark:bg-slate-950 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-amber-500 focus:outline-hidden ${
                         fieldErrors.phone
                           ? 'border-rose-500 dark:border-rose-500'
@@ -807,7 +807,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                         setEmail(e.target.value);
                         clearFieldError('email');
                       }}
-                      placeholder={t('email_placeholder') || 'manager@store.et'}
+                      placeholder={t('email_placeholder')}
                       className={`w-full px-3.5 py-2.5 rounded-xl border bg-white dark:bg-slate-950 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-amber-500 focus:outline-hidden ${
                         fieldErrors.email
                           ? 'border-rose-500 dark:border-rose-500'
@@ -835,7 +835,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                         setCity(e.target.value);
                         clearFieldError('city');
                       }}
-                      placeholder={t('onboarding_city_placeholder') || 'Addis Ababa, Hawassa, etc.'}
+                      placeholder={t('onboarding_city_placeholder')}
                       className={`w-full px-3.5 py-2.5 rounded-xl border bg-white dark:bg-slate-950 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-amber-500 focus:outline-hidden ${
                         fieldErrors.city
                           ? 'border-rose-500 dark:border-rose-500'
@@ -885,7 +885,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                       type="text"
                       value={branchName}
                       onChange={(e) => setBranchName(e.target.value)}
-                      placeholder={t('onboarding_branch_placeholder') || 'Enter branch name'}
+                      placeholder={t('onboarding_branch_placeholder')}
                       className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-amber-500 focus:outline-hidden"
                     />
                   </div>
@@ -898,7 +898,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                       type="text"
                       value={tin}
                       onChange={(e) => setTin(e.target.value)}
-                      placeholder={t('onboarding_tin_placeholder') || 'Enter your business TIN'}
+                      placeholder={t('onboarding_tin_placeholder')}
                       className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-amber-500 focus:outline-hidden"
                     />
                   </div>
@@ -961,13 +961,13 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                   <div className="text-center max-w-xl mx-auto mb-5">
                     <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-600/25 dark:border-amber-400/30 text-xs font-bold mb-2">
                       <CheckCircle2 className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-                      <span>{t('free_evaluation_label') || 'Free evaluation'}</span>
+                      <span>{t('free_evaluation_label')}</span>
                     </div>
                     <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white text-balance">
-                      {t('onboarding_complete_setup_title') || 'Complete setup'}
+                      {t('onboarding_complete_setup_title')}
                     </h2>
                     <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 mt-1 leading-relaxed">
-                      {t('onboarding_no_payment_required_desc') || 'No payment is required.'}
+                      {t('onboarding_no_payment_required_desc')}
                     </p>
                   </div>
 
@@ -976,7 +976,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                     <div className="flex items-center justify-between pb-3 border-b border-slate-900/10 dark:border-white/10 text-xs">
                       <div>
                         <div className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">
-                          {t('onboarding_free_eval_summary') || 'Free evaluation summary'}
+                          {t('onboarding_free_eval_summary')}
                         </div>
                         <div className="font-extrabold text-sm text-slate-900 dark:text-white">
                           {companyName}
@@ -984,13 +984,13 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                       </div>
                       <div className="text-right font-mono text-[11px]">
                         <div className="text-slate-400">
-                          {t('plan_label') || 'Plan:'}{' '}
+                          {t('plan_label')}{' '}
                           <strong className="text-slate-800 dark:text-slate-200">
-                            {t('free_evaluation_label') || 'Free evaluation'}
+                            {t('free_evaluation_label')}
                           </strong>
                         </div>
                         <div className="text-slate-400">
-                          {t('onboarding_no_payment_due') || 'No payment due'}
+                          {t('onboarding_no_payment_due')}
                         </div>
                       </div>
                     </div>
@@ -1016,7 +1016,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                       </div>
                       <div>
                         <span className="text-slate-400 block text-[10px] text-right">
-                          {t('onboarding_amount_due') || 'Amount due'}
+                          {t('onboarding_amount_due')}
                         </span>
                         <strong className="text-base font-black text-amber-600 dark:text-amber-400 block text-right">
                           {activePriceDisplay}
@@ -1047,7 +1047,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                   </div>
 
                   <div className="mb-5 rounded-xl border border-blue-300 bg-blue-50 p-3 text-xs text-blue-900 dark:border-blue-500/30 dark:bg-blue-950/20 dark:text-blue-200">
-                    {t('onboarding_free_eval_notice') || 'The free evaluation does not require payment.'}
+                    {t('onboarding_free_eval_notice')}
                   </div>
 
                   {/* Action Buttons */}
@@ -1075,7 +1075,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                           <CheckCircle2 className="w-4 h-4" />
                         )}
                         <span>
-                          {t('onboarding_start_free_eval') || 'Start Free Evaluation'}
+                          {t('onboarding_start_free_eval')}
                         </span>
                       </button>
                     </div>
@@ -1090,10 +1090,10 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
 
                   <div>
                     <h3 className="text-2xl font-black text-slate-900 dark:text-white">
-                      {t('onboarding_free_eval_ready') || 'Workspace ready'}
+                      {t('onboarding_free_eval_ready')}
                     </h3>
                     <p className="text-xs text-slate-700 dark:text-slate-300 mt-2 leading-relaxed">
-                      {t('onboarding_setup_complete_desc') || 'Your setup is complete.'}
+                      {t('onboarding_setup_complete_desc')}
                     </p>
                   </div>
 

@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
 import { PurchaseOrder } from '../types/inventory';
+import { fmt } from '../i18n/fmt';
 
 interface PurchaseOrdersViewProps {
   onOpenCreatePO: () => void;
@@ -90,7 +91,7 @@ export const PurchaseOrdersView: React.FC<PurchaseOrdersViewProps> = ({
               {purchaseOrders.filter((p) => p.status === 'ordered').length} {t('po_orders_unit')}
             </div>
             <div className="text-[11px] text-slate-600 dark:text-slate-400 font-mono mt-0.5">
-              {totalOrderedValue.toLocaleString(undefined, { minimumFractionDigits: 2 })} ETB {t('po_committed_suffix')}
+              {fmt(t('purchase_orders_etb'), [totalOrderedValue.toLocaleString(undefined, { minimumFractionDigits: 2 }), t('po_committed_suffix')])}
             </div>
           </div>
           <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
@@ -275,8 +276,7 @@ export const PurchaseOrdersView: React.FC<PurchaseOrdersViewProps> = ({
                       </td>
 
                       <td className="py-3 px-3 text-right font-mono font-bold text-slate-900 dark:text-white tabular-nums">
-                        {po.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ETB
-                      </td>
+                        {fmt(t('barcode_etb'), [po.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })])}</td>
 
                       <td className="py-3 px-3 text-slate-500 dark:text-slate-400 font-mono text-[11px]">
                         {po.orderDate}

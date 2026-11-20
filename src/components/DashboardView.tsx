@@ -17,6 +17,7 @@ import { ledgerDirection, newestFirst } from '../lib/ledger';
 import { IndustryToolsPanel } from './IndustryToolsPanel';
 import { BusinessInsightCard } from './BusinessInsightCard';
 import { InventoryItem } from '../types/inventory';
+import { fmt } from '../i18n/fmt';
 
 interface DashboardViewProps {
   onNavigate: (tab: string) => void;
@@ -150,10 +151,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
           <div className="mt-3 text-xl sm:text-2xl font-bold text-slate-900 dark:text-white font-mono tabular-nums truncate">
             {totalValuation.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
-            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">ETB</span>
+            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">{t('currency_etb')}</span>
           </div>
           <div className="mt-1.5 flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400 truncate">
-            <span className="tabular-nums">{t('cost_label')}: {totalCost.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} ETB</span>
+            <span className="tabular-nums">{fmt(t('dashboard_etb'), [t('cost_label'), totalCost.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })])}</span>
             <span aria-hidden="true">·</span>
             <span className="text-emerald-700 dark:text-emerald-400 font-bold font-mono tabular-nums">
               {grossProfitMargin.toFixed(1)}% {t('margin_label')}
@@ -339,8 +340,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       <div className="flex items-center gap-2 font-mono tabular-nums">
                         <span className="text-slate-600 dark:text-slate-400">{stats.count} {t('skus_short')}</span>
                         <span className="text-slate-900 dark:text-slate-100 font-bold">
-                          {stats.value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} ETB
-                        </span>
+                          {fmt(t('barcode_etb'), [stats.value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })])}</span>
                         <span className="text-amber-700 dark:text-amber-400 w-10 text-right font-bold">
                           {pct.toFixed(0)}%
                         </span>

@@ -36,6 +36,7 @@ import {
 } from 'recharts';
 import { useInventory } from '../context/InventoryContext';
 import { BUSINESS_TYPES } from '../i18n/translations';
+import { fmt } from '../i18n/fmt';
 
 interface ReportsViewProps {
   onOpenCreatePO?: (supplierId?: string, itemId?: string) => void;
@@ -44,6 +45,14 @@ interface ReportsViewProps {
 
 
 const PIE_COLORS = ['#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316'];
+
+// Computed demand index -> translation key (the index values double as logic keys).
+const DEMAND_LABEL_KEYS: Record<string, string> = {
+  'Critical Spike': 'demand_critical_spike',
+  Overstocked: 'status_overstocked',
+  High: 'demand_high',
+  Moderate: 'demand_moderate',
+};
 
 export const ReportsView: React.FC<ReportsViewProps> = ({ onOpenCreatePO }) => {
   const { items, businessType, theme, t, transactions } = useInventory();
@@ -421,8 +430,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onOpenCreatePO }) => {
             {totalValuation > 0 ? (((totalValuation - totalCost) / totalValuation) * 100).toFixed(1) : 0}%
           </div>
           <div className="mt-1 text-[11px] text-slate-600 dark:text-slate-400 truncate font-mono">
-            {(totalValuation - totalCost).toLocaleString(undefined, { maximumFractionDigits: 0 })} ETB
-          </div>
+            {fmt(t('barcode_etb'), [(totalValuation - totalCost).toLocaleString(undefined, { maximumFractionDigits: 0 })])}</div>
         </div>
 
         {/* Stockout Risk Level */}
@@ -579,8 +587,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onOpenCreatePO }) => {
               </p>
             </div>
             <span className="text-[11px] font-mono text-purple-700 dark:text-purple-400 font-bold">
-              {totalValuation.toLocaleString(undefined, { maximumFractionDigits: 0 })} ETB
-            </span>
+              {fmt(t('barcode_etb'), [totalValuation.toLocaleString(undefined, { maximumFractionDigits: 0 })])}</span>
           </div>
 
           <div className="h-64 sm:h-72 w-full pt-2 flex items-center justify-center">
@@ -645,9 +652,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onOpenCreatePO }) => {
         {/* 1. Pharmacy Specific Analytics */}
         {safeBusinessType === 'pharmacy' && (
           <div className="space-y-4">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-              EFDA Medication Expiry Timeline &amp; At-Risk Retail Value (ETB)
-            </h4>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">{t('reports_efda_medication_expiry_timeline_at')}</h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
               {pharmacyExpiryTiers.map((tier, idx) => (
                 <div
@@ -658,11 +663,9 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onOpenCreatePO }) => {
                     {tier.tier}
                   </div>
                   <div className="text-xl font-black font-mono tabular-nums" style={{ color: tier.color }}>
-                    {tier.atRiskVal.toLocaleString()} ETB
-                  </div>
+                    {fmt(t('barcode_etb'), [tier.atRiskVal.toLocaleString()])}</div>
                   <div className="text-[11px] text-slate-600 dark:text-slate-400 font-mono">
-                    {tier.count} {tier.count === 1 ? 'batch' : 'batches'} affected
-                  </div>
+                    {fmt(t('reports_affected'), [tier.count, tier.count === 1 ? 'batch' : 'batches'])}</div>
                 </div>
               ))}
             </div>
@@ -671,15 +674,12 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onOpenCreatePO }) => {
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
                 <span>
-                  <strong>EFDA Clinical Advisory:</strong> Prioritize FEFO dispensing for batches expiring within 60 days and verify 2–8°C cold-chain insulin buffer before peak demand.
-                </span>
+                  <strong>{t('reports_efda_clinical_advisory')}</strong>{' '}{t('reports_prioritize_fefo_dispensing_for_batches')}</span>
               </div>
               <button
                 onClick={() => onOpenCreatePO && onOpenCreatePO()}
                 className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs whitespace-nowrap self-start sm:self-auto cursor-pointer"
-              >
-                Create Advance PO
-              </button>
+              >{t('reports_create_advance_po')}</button>
             </div>
           </div>
         )}
@@ -687,18 +687,15 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onOpenCreatePO }) => {
         {/* 1B. Building Materials Yard Analytics */}
         {safeBusinessType === 'building' && (
           <div className="space-y-4">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-              Structural Yard Material Value &amp; Cement Hydration Risk (ETB)
-            </h4>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">{t('reports_structural_yard_material_value_cement')}</h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {categoryValuationData.map((cat, idx) => (
                 <div key={idx} className="p-4 rounded-2xl terit-glass-sub space-y-1.5">
                   <div className="text-[11px] font-bold text-slate-800 dark:text-slate-200 truncate">{cat.name}</div>
                   <div className="text-xl font-black font-mono text-amber-700 dark:text-amber-400 tabular-nums">
-                    {cat.value.toLocaleString()} ETB
-                  </div>
+                    {fmt(t('barcode_etb'), [cat.value.toLocaleString()])}</div>
                   <div className="text-[10px] text-slate-600 dark:text-slate-400 font-mono">
-                    {totalValuation > 0 ? `${Math.round((cat.value / totalValuation) * 100)}% of yard capital` : 'Yard Allocation'}
+                    {totalValuation > 0 ? `${Math.round((cat.value / totalValuation) * 100)}% of yard capital` : t('reports_yard_allocation')}
                   </div>
                 </div>
               ))}
@@ -708,15 +705,12 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onOpenCreatePO }) => {
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
                 <span>
-                  <strong>Yard Advisory:</strong> Keep Portland 50kg cement stacked max 10 bags high off damp slab and enforce 60-day FIFO dispatch to prevent moisture caking. Dry-season demand peaks Oct–May.
-                </span>
+                  <strong>{t('reports_yard_advisory')}</strong>{' '}{t('reports_keep_portland_50kg_cement_stacked')}</span>
               </div>
               <button
                 onClick={() => onOpenCreatePO && onOpenCreatePO()}
                 className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs whitespace-nowrap self-start sm:self-auto cursor-pointer"
-              >
-                Restock Cement / Rebar PO
-              </button>
+              >{t('reports_restock_cement_rebar_po')}</button>
             </div>
           </div>
         )}
@@ -724,9 +718,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onOpenCreatePO }) => {
         {/* 2. Supermarket Specific Analytics */}
         {safeBusinessType === 'supermarket' && (
           <div className="space-y-4">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-              Day-of-Week Shopping Traffic &amp; Freshness Velocity (Produce &amp; Dairy)
-            </h4>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('reports_day_of_week_shopping_traffic')}</h4>
             <div className="h-56 w-full">
             <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={1}>
               <BarChart data={supermarketDayDemand} margin={chartMargin}>
@@ -741,18 +733,14 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onOpenCreatePO }) => {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <p className="text-[11px] text-slate-500">
-              Peak retail traffic occurs Friday through Sunday. Schedule perishable replenishment arrivals every Thursday afternoon to ensure maximum shelf freshness.
-            </p>
+            <p className="text-[11px] text-slate-500">{t('reports_peak_retail_traffic_occurs_friday')}</p>
           </div>
         )}
 
         {/* 3. Wholesale Store / Depot Specific Analytics */}
         {safeBusinessType === 'store' && (
           <div className="space-y-4">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-              Pallet Bay Utilization &amp; Floor Load Tonnage History
-            </h4>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('reports_pallet_bay_utilization_floor_load')}</h4>
             <div className="h-56 w-full">
             <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={1}>
               <AreaChart data={storeBayUtilizationHistory} margin={chartMargin}>
@@ -774,17 +762,15 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onOpenCreatePO }) => {
         {/* 4. Boutique / Retail Shop Specific Analytics */}
         {safeBusinessType === 'shop' && (
           <div className="space-y-4">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-              Size Variant Sell-Through Matrix &amp; Reorder Triggers
-            </h4>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">{t('reports_size_variant_sell_through_matrix')}</h4>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
               {shopSizeSellThrough.map((sz, i) => (
                 <div key={i} className="p-3.5 rounded-2xl terit-glass-sub text-center space-y-1">
-                  <div className="text-xs font-bold text-slate-800 dark:text-slate-200">Size {sz.size}</div>
+                  <div className="text-xs font-bold text-slate-800 dark:text-slate-200">{fmt(t('reports_size'), [sz.size])}</div>
                   <div className="text-xl font-bold font-mono text-slate-900 dark:text-white">{sz.soldPct}%</div>
-                  <div className="text-[10px] text-slate-600 dark:text-slate-400 font-mono">Sell-Through</div>
+                  <div className="text-[10px] text-slate-600 dark:text-slate-400 font-mono">{t('reports_sell_through')}</div>
                   <div className={`text-[10px] font-bold ${sz.demandIndex === 'Critical Spike' ? 'text-rose-600 dark:text-rose-400' : sz.demandIndex === 'Overstocked' ? 'text-amber-700 dark:text-amber-400' : 'text-emerald-700 dark:text-emerald-400'}`}>
-                    {sz.demandIndex}
+                    {t(DEMAND_LABEL_KEYS[sz.demandIndex] || 'demand_moderate')}
                   </div>
                 </div>
               ))}
@@ -795,15 +781,13 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onOpenCreatePO }) => {
         {/* 5. Minimarket Specific Analytics */}
         {safeBusinessType === 'minimarket' && (
           <div className="space-y-4">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-              Hourly Checkout Distribution &amp; Morning/Evening Rush Velocity
-            </h4>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">{t('reports_hourly_checkout_distribution_morning_evening')}</h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {minimarketPeakHours.map((slot, i) => (
                 <div key={i} className="p-4 rounded-2xl terit-glass-sub space-y-1.5">
                   <div className="text-xs font-bold text-slate-900 dark:text-slate-200">{slot.slot}</div>
-                  <div className="text-xl font-bold font-mono text-amber-700 dark:text-amber-400">{slot.count} Transactions</div>
-                  <div className="text-[11px] text-slate-600 dark:text-slate-400">Top Basket: <span className="text-slate-800 dark:text-slate-200 font-semibold">{slot.topItem}</span></div>
+                  <div className="text-xl font-bold font-mono text-amber-700 dark:text-amber-400">{fmt(t('reports_transactions'), [slot.count])}</div>
+                  <div className="text-[11px] text-slate-600 dark:text-slate-400">{t('reports_top_basket')}{' '}<span className="text-slate-800 dark:text-slate-200 font-semibold">{slot.topItem}</span></div>
                 </div>
               ))}
             </div>
@@ -813,9 +797,8 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onOpenCreatePO }) => {
         {/* 6. Other Commercial Enterprise */}
         {safeBusinessType === 'other' && (
           <div className="p-4 rounded-2xl terit-glass-sub space-y-2 text-xs">
-            <h4 className="font-bold text-slate-900 dark:text-white">Commercial Enterprise Inventory Health Index</h4>
-            <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-[11px]">
-              Active stock valuation across branches totals <span className="font-mono font-bold text-slate-900 dark:text-white">{totalValuation.toLocaleString()} ETB</span> ({totalUnits.toLocaleString()} units). {lowStockCount > 0 ? `${lowStockCount} SKUs require safety-buffer PO replenishment.` : 'All tracked SKUs meet minimum branch safety thresholds.'}
+            <h4 className="font-bold text-slate-900 dark:text-white">{t('reports_commercial_enterprise_inventory_health_index')}</h4>
+            <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-[11px]">{t('reports_active_stock_valuation_across_branches')}{' '}<span className="font-mono font-bold text-slate-900 dark:text-white">{fmt(t('barcode_etb'), [totalValuation.toLocaleString()])}</span> ({totalUnits.toLocaleString()}{' '}{t('reports_units')}{' '}{lowStockCount > 0 ? `${lowStockCount} SKUs require safety-buffer PO replenishment.` : t('reports_all_tracked_skus_meet_minimum')}
             </p>
           </div>
         )}

@@ -102,7 +102,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose }) =
 
   const handleStartUpgrade = (selectedTier: PlanTier) => {
     if (selectedTier !== 'free') {
-      toast(t('pricing_checkout_unavailable_toast') || 'Paid checkout is not available until a verified payment provider is configured.', 'error');
+      toast(t('pricing_checkout_unavailable_toast'), 'error');
       return;
     }
     setTier('free');
@@ -144,7 +144,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose }) =
             </div>
 
             <div className="mb-6 p-3.5 rounded-2xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-500/30 text-xs text-blue-900 dark:text-blue-200">
-              {t('pricing_reference_notice') || 'Plans and listed prices are for reference. Paid checkout is unavailable, and this app does not accept or verify payments.'}
+              {t('pricing_reference_notice')}
             </div>
 
             {/* Recommended plan context */}
@@ -167,7 +167,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose }) =
                 </div>
               </div>
               <span className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold shrink-0">
-                {t('current_tier_prefix') || 'Current tier:'} {tier === 'free' ? (t('free_evaluation_label') || 'Free evaluation') : t('current_active_plan_btn')}
+                {t('current_tier_prefix')} {tier === 'free' ? (t('free_evaluation_label')) : t('current_active_plan_btn')}
               </span>
             </div>
 

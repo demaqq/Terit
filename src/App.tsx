@@ -1,5 +1,6 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { InventoryProvider, useInventory } from './context/InventoryContext';
+import { translateStatic } from './i18n/translations';
 import { Navbar } from './components/Navbar';
 import { ToastProvider, Toast, useToast } from './components/Toast';
 import { MobileBottomNav } from './components/MobileBottomNav';
@@ -55,7 +56,7 @@ const SkeletonBlock: React.FC<{ className?: string }> = ({ className = '' }) => 
 );
 
 const ViewFallback = () => (
-  <div className="space-y-6 animate-in fade-in duration-300" aria-busy="true" aria-label="Loading">
+  <div className="space-y-6 animate-in fade-in duration-300" aria-busy="true" aria-label={translateStatic('loading_label')}>
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div className="space-y-2">
         <SkeletonBlock className="h-7 w-56" />
@@ -388,7 +389,7 @@ function AppContent() {
         <button
           onClick={() => setIsColdChainOpen(true)}
           className="hidden lg:flex fixed bottom-24 right-6 z-30 p-3 rounded-full bg-sky-500 text-white font-bold shadow-xl shadow-sky-500/20 hover:scale-105 transition-all items-center gap-2 cursor-pointer"
-          title={t('coldchain_title') || 'Cold-Chain Temperature Log'}
+          title={t('coldchain_title')}
         >
           <Thermometer className="w-4 h-4" />
         </button>
@@ -399,7 +400,7 @@ function AppContent() {
         <button
           onClick={() => setIsMarkdownOpen(true)}
           className="hidden lg:flex fixed bottom-24 right-6 z-30 p-3 rounded-full bg-amber-500 text-slate-950 font-bold shadow-xl shadow-amber-500/20 hover:scale-105 transition-all items-center gap-2 cursor-pointer"
-          title={t('markdown_title') || 'Evening Markdown'}
+          title={t('markdown_title')}
         >
           <Tag className="w-4 h-4" />
         </button>
@@ -410,7 +411,7 @@ function AppContent() {
         <button
           onClick={() => setIsLandedCostOpen(true)}
           className="hidden lg:flex fixed bottom-24 right-6 z-30 p-3 rounded-full bg-indigo-500 text-white font-bold shadow-xl shadow-indigo-500/20 hover:scale-105 transition-all items-center gap-2 cursor-pointer"
-          title={t('landed_title') || 'Landed Cost Calculator'}
+          title={t('landed_title')}
         >
           <Ship className="w-4 h-4" />
         </button>

@@ -22,11 +22,11 @@ export const ColdChainModal: React.FC<ColdChainModalProps> = ({ isOpen, onClose 
     e.preventDefault();
     const value = Number(temp);
     if (!Number.isFinite(value)) {
-      setError(t('coldchain_invalid') || 'Enter a valid temperature.');
+      setError(t('coldchain_invalid'));
       return;
     }
     if (value < 2 || value > 8) {
-      setError(t('coldchain_range') || 'Temperature must be between 2.0°C and 8.0°C.');
+      setError(t('coldchain_range'));
       return;
     }
     setError(null);
@@ -58,15 +58,15 @@ export const ColdChainModal: React.FC<ColdChainModalProps> = ({ isOpen, onClose 
 
         <h2 className="text-lg font-bold mb-1 flex items-center gap-2">
           <Thermometer className="w-5 h-5 text-sky-500" />
-          {t('coldchain_title') || 'Cold-Chain Temperature Log'}
+          {t('coldchain_title')}
         </h2>
         <p className="text-xs text-slate-500 dark:text-slate-400 mb-5">
-          {t('coldchain_desc') || 'Log fridge inspection (2.0°C – 8.0°C). Stored with your profile.'}
+          {t('coldchain_desc')}
         </p>
 
         {last && (
           <div className="mb-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs">
-            <div className="text-slate-500 dark:text-slate-400">{t('coldchain_last') || 'Last inspection'}:</div>
+            <div className="text-slate-500 dark:text-slate-400">{t('coldchain_last')}:</div>
             <div className="font-mono font-bold text-slate-900 dark:text-white">
               {companyProfile?.coldChainTempC}°C · {last.toLocaleString()}
             </div>
@@ -79,7 +79,7 @@ export const ColdChainModal: React.FC<ColdChainModalProps> = ({ isOpen, onClose 
         <form onSubmit={handleSubmit} className="space-y-4 text-xs">
           <div>
             <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              {t('coldchain_temp') || 'Temperature (°C)'} *
+              {t('coldchain_temp')} *
             </label>
             <input
               type="number"
@@ -94,14 +94,14 @@ export const ColdChainModal: React.FC<ColdChainModalProps> = ({ isOpen, onClose 
           </div>
           <div>
             <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              {t('coldchain_note') || 'Inspector note (optional)'}
+              {t('coldchain_note')}
             </label>
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
               rows={2}
               className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-sky-500"
-              placeholder={t('coldchain_note_ph') || 'Fridge #2, morning check'}
+              placeholder={t('coldchain_note_ph')}
             />
           </div>
 
@@ -115,7 +115,7 @@ export const ColdChainModal: React.FC<ColdChainModalProps> = ({ isOpen, onClose 
           {saved && (
             <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 shrink-0" />
-              <span>{t('coldchain_saved') || 'Inspection saved.'}</span>
+              <span>{t('coldchain_saved')}</span>
             </div>
           )}
 
@@ -125,13 +125,13 @@ export const ColdChainModal: React.FC<ColdChainModalProps> = ({ isOpen, onClose 
               onClick={onClose}
               className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold transition-colors"
             >
-              {t('cancel_btn') || 'Close'}
+              {t('cancel_btn')}
             </button>
             <button
               type="submit"
               className="px-5 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-white font-bold shadow-md shadow-sky-500/10 transition-colors cursor-pointer"
             >
-              {t('coldchain_save') || 'Save Inspection'}
+              {t('coldchain_save')}
             </button>
           </div>
         </form>

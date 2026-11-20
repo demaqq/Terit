@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
 import { POLineItem } from '../types/inventory';
+import { fmt } from '../i18n/fmt';
 
 type CostType = 'shipping' | 'customs_duty' | 'handling' | 'insurance' | 'other';
 
@@ -320,8 +321,7 @@ export const LandedCostEditor: React.FC = () => {
               </div>
               <div>
                 <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                  {t('landed_cost_amount')} (ETB)
-                </label>
+                  {fmt(t('landed_cost_etb'), [t('landed_cost_amount')])}</label>
                 <input
                   type="number"
                   step="0.01"

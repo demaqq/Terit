@@ -18,6 +18,7 @@ import { useInventory } from '../context/InventoryContext';
 import { InventoryItem, ItemStatus } from '../types/inventory';
 import { useToast } from '../components/Toast';
 import { escapeHtml, printHtmlDocument } from '../lib/posHardware';
+import { fmt } from '../i18n/fmt';
 
 const parseCSV = (text: string): string[][] => {
   const rows: string[][] = [];
@@ -488,7 +489,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
                 onClick={onOpenPricing}
                 className="flex items-center gap-1 text-[11px] text-amber-700 dark:text-amber-400 hover:underline font-semibold cursor-pointer whitespace-nowrap"
               >
-                <span>{t('free_plan')} ({items.length}/25 SKUs)</span>
+                <span>{fmt(t('inventory_25_skus'), [t('free_plan'), items.length])}</span>
                 <Crown className="w-3 h-3 shrink-0" />
               </button>
             )}
@@ -930,11 +931,10 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
                   {/* Pricing & Location */}
                   <div className="flex items-center justify-between text-xs font-mono">
                     <div className="text-slate-500">
-                      {t('unit_price')}: <strong className="text-slate-900 dark:text-white">{item.unitPrice.toFixed(2)} ETB</strong>
+                      {t('unit_price')}: <strong className="text-slate-900 dark:text-white">{fmt(t('barcode_etb'), [item.unitPrice.toFixed(2)])}</strong>
                     </div>
                     <div className="text-amber-600 dark:text-amber-400 font-bold">
-                      {t('valuation')}: {itemValuation.toFixed(2)} ETB
-                    </div>
+                      {fmt(t('dashboard_etb'), [t('valuation'), itemValuation.toFixed(2)])}</div>
                   </div>
 
                   {/* Batch / Expiry */}
@@ -1145,18 +1145,15 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
 
                       {/* Cost */}
                       <td className="py-3 px-3 text-right font-mono text-slate-600 dark:text-slate-400 tabular-nums">
-                        {item.costPrice.toFixed(2)} ETB
-                      </td>
+                        {fmt(t('barcode_etb'), [item.costPrice.toFixed(2)])}</td>
 
                       {/* Retail Price */}
                       <td className="py-3 px-3 text-right font-mono font-bold text-slate-900 dark:text-slate-200 tabular-nums">
-                        {item.unitPrice.toFixed(2)} ETB
-                      </td>
+                        {fmt(t('barcode_etb'), [item.unitPrice.toFixed(2)])}</td>
 
                       {/* Total Valuation */}
                       <td className="py-3 px-3 text-right font-mono font-extrabold text-amber-600 dark:text-amber-400 tabular-nums">
-                        {itemValuation.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ETB
-                      </td>
+                        {fmt(t('barcode_etb'), [itemValuation.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })])}</td>
 
                       {/* Actions */}
                       <td

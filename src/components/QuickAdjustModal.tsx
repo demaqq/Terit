@@ -71,7 +71,7 @@ export const QuickAdjustModal: React.FC<QuickAdjustModalProps> = ({
     if (!selectedItemId || !currentItem) return;
 
     if (businessType === 'pharmacy' && adjustType === 'out' && currentItem.isQuarantined) {
-      toast(t('pharmacy_quarantined_blocked') || 'This batch is quarantined — dispensing blocked.', 'error');
+      toast(t('pharmacy_quarantined_blocked'), 'error');
       return;
     }
 
@@ -143,7 +143,7 @@ export const QuickAdjustModal: React.FC<QuickAdjustModalProps> = ({
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <div>
                 {currentItem.isQuarantined && (
-                  <div className="font-bold">{t('pharmacy_quarantined_batch') || 'Quarantined batch — dispensing blocked.'}</div>
+                  <div className="font-bold">{t('pharmacy_quarantined_batch')}</div>
                 )}
                 {isExpired && profile.expiry.blockExpiredIssue && (
                   <div className="font-bold">{t('expired_write_off_only')}</div>
@@ -153,8 +153,8 @@ export const QuickAdjustModal: React.FC<QuickAdjustModalProps> = ({
                 )}
                 {currentItem.expiryDate && (
                   <div>
-                    {(t('pharmacy_expiry') || 'Expiry')}: {currentItem.expiryDate}
-                    {currentItem.batchNumber ? ` · ${(t('pharmacy_batch') || 'Batch')}: ${currentItem.batchNumber}` : ''}
+                    {(t('pharmacy_expiry'))}: {currentItem.expiryDate}
+                    {currentItem.batchNumber ? ` · ${(t('pharmacy_batch'))}: ${currentItem.batchNumber}` : ''}
                   </div>
                 )}
               </div>

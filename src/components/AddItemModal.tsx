@@ -154,7 +154,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !sku.trim()) {
-      toast(t('add_item_error_required') || 'Please fill out product name and SKU.', 'error');
+      toast(t('add_item_error_required'), 'error');
       return;
     }
 
@@ -163,7 +163,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
     const up = Number(unitPrice);
     const cp = Number(costPrice);
     if (![q, min, up, cp].every(Number.isFinite) || q < 0 || min < 0 || up < 0 || cp < 0) {
-      toast(t('add_item_error_numbers') || 'Enter valid non-negative numbers for quantity, min stock, and prices.', 'error');
+      toast(t('add_item_error_numbers'), 'error');
       return;
     }
     if (!allowsFraction(unitOfMeasure, profile) && (!Number.isInteger(q) || !Number.isInteger(min))) {
@@ -246,14 +246,14 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
           </h2>
         </div>
         <p className="text-xs text-slate-500 dark:text-slate-400 mb-5">
-          {t('add_item_desc') || 'Enter product parameters, reorder thresholds, pricing, and fulfillment site assignment.'}
+          {t('add_item_desc')}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4 text-xs">
           {/* Product Name */}
           <div>
             <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              {t('product_title_label') || 'Product Title / Name *'}
+              {t('product_title_label')}
             </label>
             <input
               type="text"
@@ -270,14 +270,14 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="font-semibold text-slate-700 dark:text-slate-300">{t('sku_code_label') || 'SKU Code *'}</label>
+                  <label className="font-semibold text-slate-700 dark:text-slate-300">{t('sku_code_label')}</label>
                   <button
                     type="button"
                     onClick={() => setShowSkuGenerator(!showSkuGenerator)}
                     className="text-[11px] text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1 font-mono font-medium cursor-pointer"
                   >
                     <Sparkles className="w-3 h-3 text-amber-500" />
-                    <span>{showSkuGenerator ? (t('hide_generator') || 'Hide Generator') : (t('smart_sku_tool') || 'Smart SKU Tool')}</span>
+                    <span>{showSkuGenerator ? (t('hide_generator')) : (t('smart_sku_tool'))}</span>
                   </button>
                 </div>
                 <div className="relative">
@@ -292,7 +292,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                     type="button"
                     onClick={applyGeneratedSku}
                     className="absolute right-1.5 top-1.5 px-2 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-[10px] font-mono font-bold"
-                    title={t('regenerate_sku') || 'Regenerate unique identifier'}
+                    title={t('regenerate_sku')}
                   >
                     <RefreshCw className="w-3 h-3" />
                   </button>
@@ -301,13 +301,13 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
 
               <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="font-semibold text-slate-700 dark:text-slate-300">{t('barcode_label') || 'Barcode (UPC / EAN-13)'}</label>
+                    <label className="font-semibold text-slate-700 dark:text-slate-300">{t('barcode_label')}</label>
                     <button
                       type="button"
                       onClick={() => setBarcode(String(new Date().getFullYear()) + String(Date.now()).slice(-6) + String(Math.floor(10 + Math.random() * 90)))}
                       className="text-[11px] text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1 font-mono font-medium cursor-pointer"
                     >
-                      <Barcode className="w-3 h-3" /> {t('auto_ean') || 'Auto-EAN'}
+                      <Barcode className="w-3 h-3" /> {t('auto_ean')}
                     </button>
                   </div>
                 <input
@@ -325,14 +325,14 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-amber-700 dark:text-amber-400">
                     <Sliders className="w-3.5 h-3.5" />
-                    <span>{t('sku_formula_label') || 'Automated SKU Formula: [Category] + [Supplier] + [Timestamp] + [Salt]'}</span>
+                    <span>{t('sku_formula_label')}</span>
                   </div>
-                  <span className="text-[10px] font-mono text-slate-500">{t('live_configurator') || 'Live Configurator'}</span>
+                  <span className="text-[10px] font-mono text-slate-500">{t('live_configurator')}</span>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   <div>
-                    <label className="block text-[10px] text-slate-500 font-semibold mb-0.5">{t('pattern_formula_label') || 'Pattern Formula'}</label>
+                    <label className="block text-[10px] text-slate-500 font-semibold mb-0.5">{t('pattern_formula_label')}</label>
                     <select
                       value={skuPattern}
                       onChange={(e) => setSkuPattern(e.target.value as any)}
@@ -345,7 +345,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-[10px] text-slate-500 font-semibold mb-0.5">{t('separator_label') || 'Separator'}</label>
+                    <label className="block text-[10px] text-slate-500 font-semibold mb-0.5">{t('separator_label')}</label>
                     <div className="flex items-center gap-1 bg-white dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
                       {(['-', '_', '.'] as const).map((sep) => (
                         <button
@@ -369,25 +369,25 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                       className="w-full py-1.5 px-3 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-1 shadow-xs cursor-pointer"
                     >
                       <Sparkles className="w-3 h-3" />
-                      <span>{t('apply_to_item') || 'Apply to Item'}</span>
+                      <span>{t('apply_to_item')}</span>
                     </button>
                   </div>
                 </div>
 
                 {/* Token breakdown preview pills */}
                 <div className="flex flex-wrap items-center gap-1.5 pt-1 text-[10px] font-mono">
-                  <span className="text-slate-500">{t('components_label') || 'Components:'}</span>
+                  <span className="text-slate-500">{t('components_label')}</span>
                   <span className="px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold">
-                    {t('cat_label') || 'Cat'}: {generatedPreview.catCode}
+                    {t('cat_label')}: {generatedPreview.catCode}
                   </span>
                   <span className="px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold">
-                    {t('sup_label') || 'Sup'}: {generatedPreview.supCode}
+                    {t('sup_label')}: {generatedPreview.supCode}
                   </span>
                   <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold">
-                    {t('date_label') || 'Date'}: {generatedPreview.timeCode}
+                    {t('date_label')}: {generatedPreview.timeCode}
                   </span>
                   <span className="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold">
-                    {t('salt_label') || 'Salt'}: XXX
+                    {t('salt_label')}: XXX
                   </span>
                 </div>
               </div>
@@ -397,7 +397,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
           {/* Category & Unit of Measure */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">{t('category_label') || 'Category'}</label>
+              <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">{t('category_label')}</label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
@@ -412,7 +412,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">{t('unit_of_measure_label') || 'Unit of Measure'}</label>
+              <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">{t('unit_of_measure_label')}</label>
               <select
                 value={unitOfMeasure}
                 onChange={(e) => setUnitOfMeasure(e.target.value)}
@@ -533,7 +533,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                {t('initial_qty_label') || 'Initial On-Hand Quantity *'}
+                {t('initial_qty_label')}
               </label>
               <input
                 type="number"
@@ -548,7 +548,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
 
             <div>
               <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                {t('low_stock_threshold_label') || 'Low Stock Threshold (Alert Sentinel) *'}
+                {t('low_stock_threshold_label')}
               </label>
               <input
                 type="number"
@@ -566,7 +566,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                {`${t('cost_price') || 'Cost Price'} (ETB)`}
+                {`${t('cost_price')} (ETB)`}
               </label>
               <input
                 type="number"
@@ -581,7 +581,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
 
             <div>
               <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                {`${t('unit_price') || 'Retail / Selling Price'} (ETB)`}
+                {`${t('unit_price')} (ETB)`}
               </label>
               <input
                 type="number"
@@ -599,7 +599,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                {t('warehouse_location_label') || 'Warehouse / Storage Location'}
+                {t('warehouse_location_label')}
               </label>
               <select
                 value={location}
@@ -616,17 +616,17 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
 
             <div>
               <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                {t('assigned_supplier_label') || 'Assigned Vendor / Supplier'}
+                {t('assigned_supplier_label')}
               </label>
               <select
                 value={supplierId}
                 onChange={(e) => setSupplierId(e.target.value)}
                 className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-amber-500"
               >
-                <option value="">{t('no_direct_supplier') || '-- No Direct Supplier --'}</option>
+                <option value="">{t('no_direct_supplier')}</option>
                 {suppliers.map((s) => (
                   <option key={s.id} value={s.id}>
-                    {s.name} ({s.leadTimeDays}d {t('lead_time_short') || 'lead time'})
+                    {s.name} ({s.leadTimeDays}d {t('lead_time_short')})
                   </option>
                 ))}
               </select>
@@ -643,13 +643,13 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[11px] font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    {t('batch_lot_label') || 'Batch / Lot Number'}
+                    {t('batch_lot_label')}
                   </label>
                   <input
                     type="text"
                     value={batchNumber}
                     onChange={(e) => setBatchNumber(e.target.value)}
-                    placeholder={t('batch_lot_placeholder') || 'LOT-A102'}
+                    placeholder={t('batch_lot_placeholder')}
                     className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 font-mono text-slate-900 dark:text-slate-100 focus:outline-none focus:border-amber-500"
                   />
                 </div>
@@ -674,7 +674,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
           {/* Notes / Description */}
           <div>
             <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              {t('internal_notes_label') || 'Internal Notes / Item Specs'}
+              {t('internal_notes_label')}
             </label>
             <textarea
               rows={2}
@@ -692,13 +692,13 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
               onClick={onClose}
               className="px-4 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-semibold transition-colors"
             >
-              {t('cancel_btn') || 'Cancel'}
+              {t('cancel_btn')}
             </button>
             <button
               type="submit"
               className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold shadow-md transition-all cursor-pointer"
             >
-              {editingItem ? (t('save_changes_btn') || 'Save Changes') : (t('create_item_btn') || 'Create Inventory Item')}
+              {editingItem ? (t('save_changes_btn')) : (t('create_item_btn'))}
             </button>
           </div>
         </form>

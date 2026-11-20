@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Tag, RotateCcw, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
 import { InventoryItem } from '../types/inventory';
+import { fmt } from '../i18n/fmt';
 
 interface EveningMarkdownModalProps {
   isOpen: boolean;
@@ -27,9 +28,9 @@ export const EveningMarkdownModal: React.FC<EveningMarkdownModalProps> = ({ isOp
 
   const handleApply = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!item) { setError(t('markdown_select_item') || 'Select an item.'); return; }
+    if (!item) { setError(t('markdown_select_item')); return; }
     if (!Number.isFinite(pct) || pct <= 0 || pct > 90) {
-      setError(t('markdown_pct_range') || 'Discount must be between 1 and 90%.');
+      setError(t('markdown_pct_range'));
       return;
     }
     setError(null);
@@ -66,37 +67,37 @@ export const EveningMarkdownModal: React.FC<EveningMarkdownModalProps> = ({ isOp
 
         <h2 className="text-lg font-bold mb-1 flex items-center gap-2">
           <Tag className="w-5 h-5 text-amber-500" />
-          {t('markdown_title') || 'Evening Markdown'}
+          {t('markdown_title')}
         </h2>
         <p className="text-xs text-slate-500 dark:text-slate-400 mb-5">
-          {t('markdown_desc') || 'Apply a reversible discount to a SKU and preview ETB liquidity.'}
+          {t('markdown_desc')}
         </p>
 
         <form onSubmit={handleApply} className="space-y-4 text-xs">
           <div>
-            <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">{t('markdown_item') || 'Item'} *</label>
+            <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">{t('markdown_item')} *</label>
             <select
               value={selectedId}
               onChange={(e) => setSelectedId(e.target.value)}
               className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-amber-500"
             >
-              <option value="">{t('markdown_select') || 'Select an item…'}</option>
+              <option value="">{t('markdown_select')}</option>
               {items.map((i) => (
-                <option key={i.id} value={i.id}>{i.name} ({i.sku}) — {i.unitPrice} ETB</option>
+                <option key={i.id} value={i.id}>{fmt(t('evening_markdown_etb'), [i.name, i.sku, i.unitPrice])}</option>
               ))}
             </select>
           </div>
 
           {item && (
             <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs space-y-1">
-              <div className="flex justify-between"><span className="text-slate-500">{t('markdown_current_price') || 'Current price'}:</span><span className="font-mono font-bold">{current} ETB</span></div>
-              {hasMarkdown && <div className="flex justify-between"><span className="text-slate-500">{t('markdown_original_price') || 'Original price'}:</span><span className="font-mono">{original} ETB ({item.discountPct}%)</span></div>}
-              <div className="flex justify-between"><span className="text-slate-500">{t('markdown_qty') || 'Qty on hand'}:</span><span className="font-mono">{item.quantity}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">{t('markdown_current_price')}:</span><span className="font-mono font-bold">{fmt(t('barcode_etb'), [current])}</span></div>
+              {hasMarkdown && <div className="flex justify-between"><span className="text-slate-500">{t('markdown_original_price')}:</span><span className="font-mono">{fmt(t('evening_markdown_etb_2'), [original, item.discountPct])}</span></div>}
+              <div className="flex justify-between"><span className="text-slate-500">{t('markdown_qty')}:</span><span className="font-mono">{item.quantity}</span></div>
             </div>
           )}
 
           <div>
-            <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">{t('markdown_pct') || 'Discount %'}</label>
+            <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">{t('markdown_pct')}</label>
             <input
               type="number"
               min={1}
@@ -109,8 +110,8 @@ export const EveningMarkdownModal: React.FC<EveningMarkdownModalProps> = ({ isOp
 
           {item && (
             <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs space-y-1">
-              <div className="flex justify-between"><span>{t('markdown_new_price') || 'New price'}:</span><span className="font-mono font-bold">{newPrice} ETB</span></div>
-              <div className="flex justify-between"><span>{t('markdown_liquidity') || 'ETB liquidity'}:</span><span className="font-mono font-bold text-amber-700 dark:text-amber-400">{liquidity} ETB</span></div>
+              <div className="flex justify-between"><span>{t('markdown_new_price')}:</span><span className="font-mono font-bold">{fmt(t('barcode_etb'), [newPrice])}</span></div>
+              <div className="flex justify-between"><span>{t('markdown_liquidity')}:</span><span className="font-mono font-bold text-amber-700 dark:text-amber-400">{fmt(t('barcode_etb'), [liquidity])}</span></div>
             </div>
           )}
 
@@ -124,22 +125,22 @@ export const EveningMarkdownModal: React.FC<EveningMarkdownModalProps> = ({ isOp
           {done && (
             <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 shrink-0" />
-              <span>{t('markdown_applied') || 'Markdown applied.'}</span>
+              <span>{t('markdown_applied')}</span>
             </div>
           )}
 
           <div className="pt-2 flex items-center justify-between gap-2">
             {hasMarkdown && (
               <button type="button" onClick={handleRevert} className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold transition-colors flex items-center gap-1.5">
-                <RotateCcw className="w-3.5 h-3.5" /> {t('markdown_revert') || 'Revert'}
+                <RotateCcw className="w-3.5 h-3.5" /> {t('markdown_revert')}
               </button>
             )}
             <div className="flex items-center gap-2 ml-auto">
               <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold transition-colors">
-                {t('cancel_btn') || 'Close'}
+                {t('cancel_btn')}
               </button>
               <button type="submit" className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold shadow-md shadow-amber-500/10 transition-colors cursor-pointer">
-                {t('markdown_apply') || 'Apply Markdown'}
+                {t('markdown_apply')}
               </button>
             </div>
           </div>
