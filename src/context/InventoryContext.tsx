@@ -42,7 +42,9 @@ import {
 import {
   SupportedLanguage,
   BusinessType,
-  TRANSLATIONS,
+  TRANSLATIONS_EN,
+  getLoadedLocale,
+  loadLocale,
 } from '../i18n/translations';
 import {
   BUSINESS_PRESET_ITEMS,
@@ -578,11 +580,25 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, [itemTotals]);
 
   // --- Translation ---
-  const t = useCallback((key: string): string => {
-    const langDict = TRANSLATIONS[language];
-    if (langDict && langDict[key]) return langDict[key];
-    return TRANSLATIONS.en[key] || key;
+  // Non-English strings arrive as a separate chunk; re-render once they are loaded.
+  const [localeVersion, setLocaleVersion] = useState(0);
+  useEffect(() => {
+    if (getLoadedLocale(language)) return;
+    let cancelled = false;
+    loadLocale(language)
+      .then(() => !cancelled && setLocaleVersion((v) => v + 1))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
   }, [language]);
+
+  const t = useCallback((key: string): string => {
+    const langDict = getLoadedLocale(language);
+    if (langDict && langDict[key]) return langDict[key];
+    return TRANSLATIONS_EN[key] || key;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [language, localeVersion]);
 
   const setLanguage = (lang: SupportedLanguage) => {
     setLanguageState(lang);

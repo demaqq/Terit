@@ -17,8 +17,9 @@
   --terit-bg-muted: rgba(234, 227, 210, 0.95);
   /* Light mode: near-opaque white surfaces with a visible hairline, so cards separate
      clearly from the warm page background (the old beige-on-beige glass did not). */
-  --terit-glass-bg: linear-gradient(160deg, #FFFFFF 0%, #FDFBF7 100%);
-  --terit-glass-sub-bg: #F4F0E7;
+  /* Cards: white catching light at the top-left, easing into warm sand at the bottom-right. */
+  --terit-glass-bg: linear-gradient(145deg, #FFFFFF 0%, #FFFAF2 45%, #F6ECDD 100%);
+  --terit-glass-sub-bg: linear-gradient(145deg, #FBF7F0 0%, #F1E8D9 100%);
   --terit-glass-border: 1px solid rgba(17, 22, 37, 0.14);
   --terit-glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.95);
   --terit-glass-shadow: 0 14px 34px -12px rgba(17, 22, 37, 0.20), 0 2px 6px -1px rgba(17, 22, 37, 0.08);
@@ -111,7 +112,7 @@
     background: var(--terit-glass-bg);
     backdrop-filter: blur(26px) saturate(180%);
     -webkit-backdrop-filter: blur(26px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.75);
+    border: var(--terit-glass-border);
     box-shadow: var(--terit-glass-shadow), var(--terit-glass-highlight);
     border-radius: var(--terit-radius);
   }
@@ -124,7 +125,7 @@
     background: var(--terit-glass-sub-bg);
     backdrop-filter: blur(20px) saturate(170%);
     -webkit-backdrop-filter: blur(20px) saturate(170%);
-    border: 1px solid rgba(255, 255, 255, 0.65);
+    border: var(--terit-glass-sub-border, 1px solid rgba(17, 22, 37, 0.08));
     box-shadow: var(--terit-shadow), var(--terit-glass-highlight);
     border-radius: var(--terit-radius);
   }
@@ -387,4 +388,27 @@ html:not(.dark) .terit-modal {
   --terit-glass-bg: linear-gradient(155deg, rgba(234, 227, 210, 0.85) 0%, rgba(255, 255, 255, 0.58) 100%);
   --terit-glass-sub-bg: linear-gradient(155deg, rgba(234, 227, 210, 0.72) 0%, rgba(245, 240, 228, 0.52) 100%);
   --terit-glass-border: 1px solid rgba(255, 255, 255, 0.75);
+}
+
+/* Modal panels keep their soft white frosted edge. */
+html:not(.dark) .terit-modal { --terit-glass-sub-border: 1px solid rgba(255, 255, 255, 0.65); }
+
+/*
+ * Tinted stat cards: a wash of the card's meaning colour in the top-left corner,
+ * fading into the normal card gradient. Text stays on near-white, so contrast holds.
+ */
+.terit-tint-emerald, .terit-tint-sky, .terit-tint-amber, .terit-tint-rose { --tint: 16, 185, 129; }
+.terit-tint-sky { --tint: 14, 165, 233; }
+.terit-tint-amber { --tint: 245, 158, 11; }
+.terit-tint-rose { --tint: 244, 63, 94; }
+html:not(.dark) :is(.terit-tint-emerald, .terit-tint-sky, .terit-tint-amber, .terit-tint-rose) {
+  background:
+    radial-gradient(120% 90% at 0% 0%, rgba(var(--tint), 0.16) 0%, rgba(var(--tint), 0.05) 45%, transparent 70%),
+    linear-gradient(145deg, #FFFFFF 0%, #FFFAF2 50%, #F6ECDD 100%);
+  border-color: rgba(var(--tint), 0.28);
+}
+.dark :is(.terit-tint-emerald, .terit-tint-sky, .terit-tint-amber, .terit-tint-rose) {
+  background:
+    radial-gradient(120% 90% at 0% 0%, rgba(var(--tint), 0.20) 0%, rgba(var(--tint), 0.06) 45%, transparent 70%),
+    var(--terit-glass-bg);
 }

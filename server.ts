@@ -1,4 +1,5 @@
 import express from 'express';
+import compression from 'compression';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
@@ -21,6 +22,9 @@ app.use((req, res, next) => {
   next();
 });
 
+// gzip/deflate responses: JS and CSS shrink by roughly 70% on the wire.
+app.use(compression());
+
 app.use(express.json({ limit: '1mb' }));
 
 // API endpoints
@@ -30,10 +34,23 @@ app.use('/api', apiRouter);
 const distPath = path.basename(__dirname) === 'dist'
   ? __dirname
   : path.resolve(__dirname, 'dist');
-app.use(express.static(distPath));
+// Hashed build files never change, so browsers may keep them for a year; index.html must
+// always be revalidated so a new deploy is picked up immediately.
+app.use(
+  '/assets',
+  express.static(path.join(distPath, 'assets'), { immutable: true, maxAge: '1y', fallthrough: false })
+);
+app.use(
+  express.static(distPath, {
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith('.html')) res.setHeader('Cache-Control', 'no-cache');
+    },
+  })
+);
 
 // Fallback to index.html for SPA
 app.get('*', (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache');
   res.sendFile(path.join(distPath, 'index.html'));
 });
 

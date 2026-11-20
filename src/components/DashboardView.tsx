@@ -139,7 +139,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       {/* KPI Cards Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Retail Valuation */}
-        <div className="terit-glass rounded-2xl p-5 transition-all hover:-translate-y-0.5">
+        <div className="terit-glass terit-tint-emerald rounded-2xl p-5 transition-all hover:-translate-y-0.5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
               {t('retail_valuation')}
@@ -162,7 +162,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* Physical Units */}
-        <div className="terit-glass rounded-2xl p-5 transition-all hover:-translate-y-0.5">
+        <div className="terit-glass terit-tint-sky rounded-2xl p-5 transition-all hover:-translate-y-0.5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
               {t('physical_units')}
@@ -181,7 +181,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* Low Stock Alerts */}
-        <div className="terit-glass rounded-2xl p-5 transition-all hover:-translate-y-0.5">
+        <div className="terit-glass terit-tint-amber rounded-2xl p-5 transition-all hover:-translate-y-0.5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
               {t('low_stock_breaches')}
@@ -207,7 +207,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* Out of Stock & Pending POs */}
-        <div className="terit-glass rounded-2xl p-5 transition-all hover:-translate-y-0.5">
+        <div className="terit-glass terit-tint-rose rounded-2xl p-5 transition-all hover:-translate-y-0.5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
               {t('out_of_stock_kpi')}

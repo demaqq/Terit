@@ -28,14 +28,13 @@ export default defineConfig(() => {
     build: {
       rollupOptions: {
         output: {
+          // Only libraries every page needs get their own long-cached chunk. Everything else
+          // (charts, QR codes, AI SDK...) stays with the screen that uses it and loads on demand.
           manualChunks(id) {
             if (!id.includes('node_modules')) return;
-            if (id.includes('recharts') || id.includes('d3-') || id.includes('victory-vendor')) return 'charts';
             if (id.includes('firebase')) return 'firebase';
-            if (id.includes('motion') || id.includes('framer-motion')) return 'motion';
-            if (id.includes('@google/genai')) return 'genai';
-            if (id.includes('react-dom') || id.includes('/react/')) return 'react-vendor';
-            return 'vendor';
+            if (id.includes('lucide-react')) return 'icons';
+            if (id.includes('react-dom') || id.includes('/react/') || id.includes('scheduler')) return 'react-vendor';
           },
         },
       },

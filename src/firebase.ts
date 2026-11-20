@@ -102,7 +102,7 @@ export async function testFirestoreConnection() {
   }
 }
 
-testFirestoreConnection();
+// Not called at startup: it cost a network round-trip on every load just to log a message.
 
 export { signInWithPopup, signOut, onAuthStateChanged, getAdditionalUserInfo };
 export type { User };
