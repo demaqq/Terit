@@ -22,6 +22,7 @@ import { allowsFraction, defaultDueDate, expiryState } from '../data/businessPro
 import { useToast } from '../components/Toast';
 import { ETRReceiptModal } from './ETRReceiptModal';
 import { fmt } from '../i18n/fmt';
+import { backdrop } from '../lib/dismiss';
 
 export const CreditLedgerView: React.FC = () => {
   const { items, companyProfile, businessType, profile, quickAdjustStock, t } = useInventory();
@@ -486,7 +487,7 @@ export const CreditLedgerView: React.FC = () => {
 
       {/* Modal: Record a manually verified payment */}
       {isSettleOpen && selectedRecord && (
-        <div className="fixed inset-0 z-50 flex p-3 sm:p-5 bg-slate-900/55 dark:bg-slate-950/75 backdrop-blur-md overflow-y-auto">
+        <div {...backdrop(() => setIsSettleOpen(false))} className="fixed inset-0 z-50 flex p-3 sm:p-5 bg-slate-900/55 dark:bg-slate-950/75 backdrop-blur-md overflow-y-auto">
           <div className="terit-modal rounded-3xl max-w-md w-full p-5 sm:p-6 m-auto max-h-[92dvh] overflow-y-auto relative text-slate-900 dark:text-slate-100">
             <button
               onClick={() => setIsSettleOpen(false)}
@@ -592,7 +593,7 @@ export const CreditLedgerView: React.FC = () => {
 
       {/* MODAL: Digital Proforma / Receipt */}
       {isReceiptOpen && selectedRecord && (
-        <div className="fixed inset-0 z-50 flex p-3 sm:p-5 bg-slate-900/55 dark:bg-slate-950/75 backdrop-blur-md overflow-y-auto">
+        <div {...backdrop(() => setIsReceiptOpen(false))} className="fixed inset-0 z-50 flex p-3 sm:p-5 bg-slate-900/55 dark:bg-slate-950/75 backdrop-blur-md overflow-y-auto">
           <div className="terit-modal rounded-3xl max-w-md w-full p-5 sm:p-6 m-auto max-h-[92dvh] overflow-y-auto relative text-slate-900 dark:text-slate-100">
             <button
               onClick={() => setIsReceiptOpen(false)}
@@ -653,7 +654,7 @@ export const CreditLedgerView: React.FC = () => {
 
       {/* MODAL: New Credit Sale */}
       {isNewCreditOpen && (
-        <div className="fixed inset-0 z-50 flex p-3 sm:p-5 bg-slate-900/55 dark:bg-slate-950/75 backdrop-blur-md overflow-y-auto">
+        <div {...backdrop(() => setIsNewCreditOpen(false))} className="fixed inset-0 z-50 flex p-3 sm:p-5 bg-slate-900/55 dark:bg-slate-950/75 backdrop-blur-md overflow-y-auto">
           <div className="terit-modal rounded-3xl max-w-lg w-full p-5 sm:p-8 m-auto max-h-[92dvh] overflow-y-auto relative text-slate-900 dark:text-slate-100">
             <button
               onClick={() => setIsNewCreditOpen(false)}

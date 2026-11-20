@@ -318,5 +318,7 @@ export interface CompanyProfile {
   /** Categories and units the business added itself (beyond its catalog defaults). */
   customCategories?: string[];
   customUnits?: string[];
+  /** Facts and preferences the owner taught Terit Copilot (prices, suppliers, policies). */
+  copilotNotes?: string;
 }
 

@@ -3,6 +3,7 @@ import { X, Plus, Trash2, ShoppingCart, AlertCircle } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
 import { POLineItem } from '../types/inventory';
 import { fmt } from '../i18n/fmt';
+import { backdrop } from '../lib/dismiss';
 
 interface CreatePOModalProps {
   isOpen: boolean;
@@ -167,7 +168,7 @@ export const CreatePOModal: React.FC<CreatePOModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex p-2.5 sm:p-5 bg-slate-900/55 dark:bg-slate-950/75 backdrop-blur-md overflow-y-auto">
+    <div {...backdrop(onClose)} className="fixed inset-0 z-50 flex p-2.5 sm:p-5 bg-slate-900/55 dark:bg-slate-950/75 backdrop-blur-md overflow-y-auto">
       <div className="terit-modal rounded-3xl max-w-3xl w-full p-4 sm:p-7 relative m-auto max-h-[92dvh] overflow-y-auto text-slate-900 dark:text-slate-100 transition-colors">
         <button
           onClick={onClose}

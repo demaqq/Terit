@@ -18,6 +18,7 @@ import { InventoryItem, ItemStatus } from '../types/inventory';
 import { useToast } from '../components/Toast';
 import { escapeHtml, printHtmlDocument } from '../lib/posHardware';
 import { fmt } from '../i18n/fmt';
+import { backdrop } from '../lib/dismiss';
 
 const parseCSV = (text: string): string[][] => {
   const rows: string[][] = [];
@@ -1212,7 +1213,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
 
       {/* Delete Item Confirmation Modal */}
       {itemToDelete && (
-        <div className="fixed inset-0 z-50 flex p-3 sm:p-5 bg-slate-900/55 dark:bg-slate-950/75 backdrop-blur-md overflow-y-auto">
+        <div {...backdrop(() => setItemToDelete(null))} className="fixed inset-0 z-50 flex p-3 sm:p-5 bg-slate-900/55 dark:bg-slate-950/75 backdrop-blur-md overflow-y-auto">
           <div className="terit-modal rounded-3xl max-w-sm w-full p-6 m-auto max-h-[92dvh] overflow-y-auto space-y-4 text-slate-900 dark:text-slate-100">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-rose-500/10 text-rose-600 flex items-center justify-center font-bold">

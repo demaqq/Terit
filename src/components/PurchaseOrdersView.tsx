@@ -14,6 +14,7 @@ import {
 import { useInventory } from '../context/InventoryContext';
 import { PurchaseOrder } from '../types/inventory';
 import { fmt } from '../i18n/fmt';
+import { backdrop } from '../lib/dismiss';
 
 interface PurchaseOrdersViewProps {
   onOpenCreatePO: () => void;
@@ -353,7 +354,7 @@ export const PurchaseOrdersView: React.FC<PurchaseOrdersViewProps> = ({
 
       {/* Receive PO Confirmation Modal */}
       {poToReceive && (
-        <div className="fixed inset-0 z-50 flex p-4 bg-slate-900/55 dark:bg-slate-950/75 backdrop-blur-md overflow-y-auto">
+        <div {...backdrop(() => setPoToReceive(null))} className="fixed inset-0 z-50 flex p-4 bg-slate-900/55 dark:bg-slate-950/75 backdrop-blur-md overflow-y-auto">
           <div className="terit-modal rounded-3xl max-w-sm w-full p-6 space-y-4 m-auto text-slate-900 dark:text-slate-100">
             <div className="flex items-start justify-between gap-2">
               <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
@@ -394,7 +395,7 @@ export const PurchaseOrdersView: React.FC<PurchaseOrdersViewProps> = ({
       )}
       {/* Cancel PO Confirmation Modal */}
       {poToCancel && (
-        <div className="fixed inset-0 z-50 flex p-4 bg-slate-900/55 dark:bg-slate-950/75 backdrop-blur-md overflow-y-auto">
+        <div {...backdrop(() => setPoToCancel(null))} className="fixed inset-0 z-50 flex p-4 bg-slate-900/55 dark:bg-slate-950/75 backdrop-blur-md overflow-y-auto">
           <div className="terit-modal rounded-3xl max-w-sm w-full p-6 space-y-4 m-auto text-slate-900 dark:text-slate-100">
             <div className="flex items-start justify-between gap-2">
               <div className="w-10 h-10 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">

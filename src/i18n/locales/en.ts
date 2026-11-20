@@ -1312,6 +1312,14 @@ const dict: Record<string, string> = {
   "option_new_category_ph": "e.g. Solar products",
   "option_new_unit_ph": "e.g. quintal, ጣሳ, bundle",
   "option_add_confirm": "Add",
+  "copilot_resize": "Drag to resize",
+  "copilot_size_larger": "Make wider",
+  "copilot_size_smaller": "Make narrower",
+  "copilot_teach_title": "Teach Copilot",
+  "copilot_teach_help": "Tell Copilot facts about your business that it can't see in your stock: prices you agreed, best suppliers, credit rules, busy days, what you never sell. It uses them in every answer.",
+  "copilot_teach_placeholder": "e.g. We buy cement from Dangote via Abebe Trading, 7-day credit. Contractors get 3% off orders above 100,000 ETB. Saturdays are our busiest day. We don't sell on credit to new customers.",
+  "copilot_teach_save": "Save",
+  "copilot_teach_saved": "Saved — Copilot will use this",
 };
 
 export default dict;

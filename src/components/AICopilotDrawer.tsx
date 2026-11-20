@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { buildCopilotSystemPrompt } from '../../server/prompts';
 import { getClaudeSample } from '../lib/claudeBridge';
 import {
@@ -13,9 +13,14 @@ import {
   Loader2,
   Copy,
   Check,
+  Maximize2,
+  Minimize2,
+  GraduationCap,
+  GripVertical,
 } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
 import { ChatMessage } from '../types/inventory';
+import { loadCreditRecords, isOverdue } from '../lib/creditRecords';
 
 interface AICopilotDrawerProps {
   isOpen: boolean;
@@ -106,13 +111,80 @@ const renderFormattedContent = (content: string, isUserMessage: boolean) => {
 };
 
 export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({ isOpen, onClose }) => {
-  const { items, suppliers, purchaseOrders, warehouses, businessType, language, t } = useInventory();
+  const {
+    items, suppliers, purchaseOrders, warehouses, transactions, businessType, language, t,
+    profile, tier, companyProfile, setCompanyProfile, getReorderRecommendations,
+  } = useInventory();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [modelMode, setModelMode] = useState<'general' | 'fast' | 'complex'>('general');
   const [loading, setLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  // Width of the copilot panel on tablets and desktops (phones always use the full screen).
+  // People can drag the left edge or use the size button; the choice is remembered.
+  const SIZES = [400, 560, 820];
+  const clampWidth = (w: number) => Math.round(Math.min(Math.max(w, 340), Math.max(360, window.innerWidth - 24)));
+  const [width, setWidth] = useState<number>(() => {
+    try {
+      const saved = Number(localStorage.getItem('terit_copilot_width'));
+      return saved > 0 ? saved : SIZES[1];
+    } catch {
+      return SIZES[1];
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem('terit_copilot_width', String(width));
+    } catch {
+      /* storage unavailable: keep the size for this visit only */
+    }
+  }, [width]);
+  const isWide = width >= SIZES[2] - 20;
+  const cycleSize = () => setWidth((w) => clampWidth(SIZES.find((x) => x > w + 20) ?? SIZES[0]));
+  const startResize = (e: React.PointerEvent) => {
+    e.preventDefault();
+    const move = (ev: PointerEvent) => setWidth(clampWidth(window.innerWidth - ev.clientX));
+    const up = () => {
+      document.removeEventListener('pointermove', move);
+      document.removeEventListener('pointerup', up);
+      document.body.style.userSelect = '';
+    };
+    document.body.style.userSelect = 'none';
+    document.addEventListener('pointermove', move);
+    document.addEventListener('pointerup', up);
+  };
+
+  // Clicking anywhere else in the app closes the copilot (the conversation is kept).
+  // Clicks inside a modal opened on top, or on a button that opens the copilot, don't count.
+  const close = useCallback(() => onClose(), [onClose]);
+  useEffect(() => {
+    if (!isOpen) return;
+    const onDown = (e: PointerEvent) => {
+      const target = e.target as Element | null;
+      if (!target || panelRef.current?.contains(target)) return;
+      if (target.closest('[data-copilot-toggle], [data-backdrop], [data-toast]')) return;
+      close();
+    };
+    document.addEventListener('pointerdown', onDown);
+    return () => document.removeEventListener('pointerdown', onDown);
+  }, [isOpen, close]);
+  useEffect(() => {
+    if (panelRef.current) (panelRef.current as HTMLDivElement & { __teritDismiss?: () => void }).__teritDismiss = close;
+  });
+
+  // "Teach Copilot": the owner's own facts and preferences, saved with the company profile.
+  const [isTeachOpen, setIsTeachOpen] = useState(false);
+  const [notesDraft, setNotesDraft] = useState(companyProfile.copilotNotes || '');
+  const [notesSaved, setNotesSaved] = useState(false);
+  useEffect(() => setNotesDraft(companyProfile.copilotNotes || ''), [companyProfile.copilotNotes]);
+  const saveNotes = () => {
+    setCompanyProfile({ copilotNotes: notesDraft.trim().slice(0, 2000) });
+    setNotesSaved(true);
+    setTimeout(() => setNotesSaved(false), 2000);
+  };
 
   const nicheBadgeMap: Record<string, string> = {
     pharmacy: t('biz_pharmacy_title'),
@@ -183,74 +255,87 @@ Ask me in **English**, **አማርኛ**, **Afaan Oromoo**, **ትግርኛ**, or 
     }
   }, [messages, isOpen]);
 
-  if (!isOpen) return null;
-
-  const nowMs = Date.now();
-  const nearExpirySKUs = items
-    .filter((i) => i.expiryDate && (new Date(i.expiryDate).getTime() - nowMs) / (1000 * 3600 * 24) <= 120)
-    .map((i) => ({
-      name: i.name,
-      sku: i.sku,
-      batch: i.batchNumber,
-      expiryDate: i.expiryDate,
-      quantity: i.quantity,
-      valueETB: Math.round(i.quantity * i.unitPrice),
-    }));
-
-  const categorySummary = items.reduce<Record<string, { skus: number; units: number; retailETB: number }>>((acc, item) => {
-    const key = item.category || 'General';
-    if (!acc[key]) acc[key] = { skus: 0, units: 0, retailETB: 0 };
-    acc[key].skus += 1;
-    acc[key].units += item.quantity;
-    acc[key].retailETB += Math.round(item.quantity * item.unitPrice);
-    return acc;
-  }, {});
-
-  // Live ETB inventory snapshot sent to Terit Copilot
-  const inventoryContext = {
-    currency: 'ETB',
-    businessType,
-    totalSKUs: items.length,
-    totalUnits: items.reduce((s, i) => s + i.quantity, 0),
-    totalRetailValueETB: Math.round(items.reduce((s, i) => s + i.quantity * i.unitPrice, 0)),
-    totalCostValueETB: Math.round(items.reduce((s, i) => s + i.quantity * i.costPrice, 0)),
-    warehouses: warehouses.map((w) => w.name),
-    categoryBreakdown: categorySummary,
-    activeSKUs: items.slice(0, 15).map((i) => ({
-      name: i.name,
-      sku: i.sku,
-      qty: i.quantity,
-      uom: i.unitOfMeasure,
-      minAlert: i.minStockAlert,
-      costETB: i.costPrice,
-      priceETB: i.unitPrice,
-      location: i.location,
-      supplier: i.supplierName,
-      expiry: i.expiryDate,
-    })),
-    lowStockSKUs: items
-      .filter((i) => i.status === 'low_stock')
-      .map((i) => ({
-        name: i.name,
-        sku: i.sku,
-        quantity: i.quantity,
-        minAlert: i.minStockAlert,
-        supplier: i.supplierName,
-        unitCostETB: i.costPrice,
-        expiryDate: i.expiryDate,
-        batchNumber: i.batchNumber,
+  // Live snapshot of the business sent with each question. Built when a question is sent
+  // (not on every render) so a closed copilot costs nothing.
+  const buildContext = () => {
+    const nowMs = Date.now();
+    const DAY = 86_400_000;
+    const sold30 = new Map<string, number>();
+    const lastSaleAt = new Map<string, number>();
+    for (const tx of transactions) {
+      const at = new Date(tx.createdAt || 0).getTime();
+      const isSale = tx.type === 'sale' || tx.referenceType === 'sale' || (tx.type === 'outbound' && tx.quantity < 0);
+      if (!isSale) continue;
+      if (nowMs - at <= 30 * DAY) sold30.set(tx.itemId, (sold30.get(tx.itemId) || 0) + Math.abs(tx.quantity));
+      lastSaleAt.set(tx.itemId, Math.max(lastSaleAt.get(tx.itemId) || 0, at));
+    }
+    const credit = loadCreditRecords(businessType).filter((r) => r.remainingAmount > 0);
+    const overdue = credit.filter((r) => isOverdue(r));
+    const reorder = getReorderRecommendations().slice(0, 12);
+    const r2 = (n: number) => Math.round(n * 100) / 100;
+    return {
+      currency: 'ETB',
+      today: new Date().toISOString().slice(0, 10),
+      business: {
+        type: businessType,
+        name: companyProfile.companyName || undefined,
+        city: companyProfile.city || undefined,
+        plan: tier,
+      },
+      totals: {
+        items: items.length,
+        units: r2(items.reduce((s, i) => s + i.quantity, 0)),
+        stockValueAtCostETB: Math.round(items.reduce((s, i) => s + i.quantity * i.costPrice, 0)),
+        stockValueAtRetailETB: Math.round(items.reduce((s, i) => s + i.quantity * i.unitPrice, 0)),
+        lowStock: items.filter((i) => i.status === 'low_stock').length,
+        outOfStock: items.filter((i) => i.status === 'out_of_stock').length,
+        openPurchaseOrders: purchaseOrders.filter((p) => p.status === 'ordered').length,
+      },
+      branches: warehouses.map((w) => w.name),
+      // Every item (up to 150), compact: name, sku, category, unit, qty, min, cost, price, sold in 30 days, days since last sale, expiry.
+      itemColumns: ['name', 'sku', 'category', 'unit', 'qty', 'min', 'costETB', 'priceETB', 'sold30d', 'daysSinceSale', 'expiry', 'supplier'],
+      items: items.slice(0, 150).map((i) => {
+        const last = lastSaleAt.get(i.id);
+        return [
+          i.name, i.sku, i.category, i.unitOfMeasure, r2(i.quantity), i.minStockAlert, i.costPrice, i.unitPrice,
+          r2(sold30.get(i.id) || 0), last ? Math.floor((nowMs - last) / DAY) : null, i.expiryDate || null, i.supplierName || null,
+        ];
+      }),
+      itemsOmitted: Math.max(0, items.length - 150),
+      reorderNow: reorder.map((r) => ({
+        item: r.itemName, branch: r.locationName, onHand: r.quantityOnHand, dailySales: r2(r.averageDailyVelocity),
+        leadTimeDays: r.leadTimeDays, reorderPoint: r.reorderPoint, orderQty: r.recommendedOrderQuantity, costETB: Math.round(r.estimatedCost), urgency: r.urgency,
       })),
-    outOfStockSKUs: items
-      .filter((i) => i.status === 'out_of_stock')
-      .map((i) => ({
-        name: i.name,
-        sku: i.sku,
-        supplier: i.supplierName,
-      })),
-    nearExpiryBatches: nearExpirySKUs,
-    openPurchaseOrders: purchaseOrders.filter((p) => p.status === 'ordered').length,
-    vendors: suppliers.map((s) => ({ name: s.name, leadTimeDays: s.leadTimeDays })),
+      expiringSoon: items
+        .filter((i) => i.expiryDate && (new Date(i.expiryDate).getTime() - nowMs) / DAY <= Math.max(profile.expiry.warnDays, 30))
+        .slice(0, 30)
+        .map((i) => ({ item: i.name, batch: i.batchNumber, expiry: i.expiryDate, qty: i.quantity, valueETB: Math.round(i.quantity * i.costPrice) })),
+      customerCredit: {
+        outstandingETB: Math.round(credit.reduce((s, r) => s + r.remainingAmount, 0)),
+        openAccounts: credit.length,
+        overdueAccounts: overdue.length,
+        overdueETB: Math.round(overdue.reduce((s, r) => s + r.remainingAmount, 0)),
+        largestBalances: [...credit].sort((a, b) => b.remainingAmount - a.remainingAmount).slice(0, 5)
+          .map((r) => ({ customer: r.customerName, owesETB: Math.round(r.remainingAmount), due: r.dueDate })),
+      },
+      suppliers: suppliers.slice(0, 30).map((s) => ({ name: s.name, leadTimeDays: s.leadTimeDays })),
+    };
   };
+
+  const businessRules = {
+    reorderCoverDays: profile.reorder.coverDays,
+    safetyFactor: profile.reorder.safetyFactor,
+    defaultLeadTimeDays: profile.reorder.defaultLeadTimeDays,
+    roundOrdersToPack: profile.reorder.roundToPack,
+    expiryTracked: profile.expiry.tracked,
+    expiryRequired: profile.expiry.required,
+    expiredStockBlockedFromSale: profile.expiry.blockExpiredIssue,
+    expiryWarningDays: profile.expiry.warnDays,
+    fractionalQuantities: profile.fractionalQty,
+    creditTermDays: profile.credit.termDays,
+    creditLimitPerCustomerETB: profile.credit.limitPerCustomer,
+  };
+  const ownerNotes = companyProfile.copilotNotes || '';
 
   const handleSend = async (overridePrompt?: string) => {
     const textToSend = (overridePrompt || input).trim();
@@ -287,7 +372,7 @@ Ask me in **English**, **አማርኛ**, **Afaan Oromoo**, **ትግርኛ**, or 
           content: m.content,
         }));
         while (turns.length && turns[0].role !== 'user') turns.shift();
-        const rules = buildCopilotSystemPrompt({ language, businessType, inventoryContext });
+        const rules = buildCopilotSystemPrompt({ language, businessType, inventoryContext: buildContext(), businessRules, ownerNotes });
         const replyId = 'reply-' + Date.now();
         const ts = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         let started = false;
@@ -318,7 +403,9 @@ Ask me in **English**, **አማርኛ**, **Afaan Oromoo**, **ትግርኛ**, or 
         body: JSON.stringify({
           messages: apiMessages.length > 0 ? apiMessages : [{ role: 'user', content: textToSend }],
           modelMode,
-          inventoryContext,
+          inventoryContext: buildContext(),
+          businessRules,
+          ownerNotes,
           language,
           businessType,
         }),
@@ -607,7 +694,29 @@ Ask me in **English**, **አማርኛ**, **Afaan Oromoo**, **ትግርኛ**, or 
   };
 
   return (
-    <div className="fixed inset-y-0 right-0 z-50 h-[100dvh] w-full sm:w-[500px] md:w-[540px] max-w-full terit-modal rounded-none sm:rounded-l-3xl border-y-0 border-r-0 flex flex-col text-slate-900 dark:text-slate-100 transition-colors">
+    <div
+      ref={panelRef}
+      data-drawer=""
+      hidden={!isOpen}
+      role="dialog"
+      aria-label={t('copilot_btn')}
+      style={{ ['--copilot-w' as string]: `${width}px` }}
+      className="fixed inset-y-0 right-0 z-50 h-[100dvh] w-full sm:w-[var(--copilot-w)] max-w-full terit-modal rounded-none sm:rounded-l-3xl border-y-0 border-r-0 flex flex-col text-slate-900 dark:text-slate-100 transition-colors shadow-2xl"
+    >
+      {/* Drag the left edge to resize (tablet and desktop) */}
+      <div
+        onPointerDown={startResize}
+        onDoubleClick={cycleSize}
+        role="separator"
+        aria-orientation="vertical"
+        aria-label={t('copilot_resize')}
+        title={t('copilot_resize')}
+        className="hidden sm:flex absolute left-0 top-0 bottom-0 w-3 -ml-1.5 z-10 cursor-ew-resize items-center justify-center group"
+      >
+        <span className="h-12 w-1.5 rounded-full bg-slate-400/40 group-hover:bg-amber-500 transition-colors flex items-center justify-center">
+          <GripVertical className="w-3 h-3 text-transparent group-hover:text-white" />
+        </span>
+      </div>
       {/* Top Header */}
       <div className="p-4 border-b border-slate-200 dark:border-white/10 flex items-center justify-between gap-2 bg-white/90 dark:bg-slate-950/60 shrink-0">
         <div className="flex items-center gap-2.5 min-w-0">
@@ -629,6 +738,28 @@ Ask me in **English**, **አማርኛ**, **Afaan Oromoo**, **ትግርኛ**, or 
 
         <div className="flex items-center gap-1.5 shrink-0">
           <button
+            type="button"
+            onClick={() => setIsTeachOpen((v) => !v)}
+            aria-expanded={isTeachOpen}
+            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+              isTeachOpen || ownerNotes
+                ? 'text-amber-700 dark:text-amber-300 bg-amber-500/15'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+            }`}
+            title={t('copilot_teach_title')}
+          >
+            <GraduationCap className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            onClick={cycleSize}
+            className="hidden sm:inline-flex p-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            title={isWide ? t('copilot_size_smaller') : t('copilot_size_larger')}
+            aria-label={isWide ? t('copilot_size_smaller') : t('copilot_size_larger')}
+          >
+            {isWide ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </button>
+          <button
             onClick={clearChat}
             className="p-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             title={t('copilot_reset_title')}
@@ -644,6 +775,40 @@ Ask me in **English**, **አማርኛ**, **Afaan Oromoo**, **ትግርኛ**, or 
           </button>
         </div>
       </div>
+
+      {isTeachOpen && (
+        <div className="px-4 py-3 border-b border-slate-200 dark:border-white/10 bg-amber-50/80 dark:bg-amber-500/5 space-y-2 shrink-0">
+          <div>
+            <h4 className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+              <GraduationCap className="w-3.5 h-3.5 text-amber-600" />
+              {t('copilot_teach_title')}
+            </h4>
+            <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">{t('copilot_teach_help')}</p>
+          </div>
+          <textarea
+            value={notesDraft}
+            onChange={(e) => setNotesDraft(e.target.value.slice(0, 2000))}
+            rows={5}
+            placeholder={t('copilot_teach_placeholder')}
+            aria-label={t('copilot_teach_title')}
+            className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white placeholder:text-slate-500 focus:outline-none focus:border-amber-500 resize-y"
+          />
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[10px] text-slate-500 tabular-nums">{notesDraft.length}/2000</span>
+            <div className="flex items-center gap-2">
+              {notesSaved && <span className="text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold">{t('copilot_teach_saved')}</span>}
+              <button
+                type="button"
+                onClick={saveNotes}
+                disabled={notesDraft.trim() === (companyProfile.copilotNotes || '').trim()}
+                className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white text-xs font-bold cursor-pointer disabled:cursor-not-allowed"
+              >
+                {t('copilot_teach_save')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Mode Selector Bar */}
       <div className="px-4 py-2 bg-slate-100/90 dark:bg-slate-950/40 border-b border-slate-200 dark:border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs shrink-0">

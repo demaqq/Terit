@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   Boxes,
   LogOut,
@@ -26,6 +26,7 @@ const NAV_ACTIVE =
 const NAV_IDLE =
   'text-[#111625] dark:text-slate-300 hover:text-[#D45B25] dark:hover:text-white border-transparent hover:bg-white/50 dark:hover:bg-white/8';
 import { SupportedLanguage, BUSINESS_TYPES } from '../i18n/translations';
+import { useClickOutside } from '../lib/dismiss';
 
 interface NavbarProps {
   activeTab: string;
@@ -63,6 +64,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   } = useInventory();
 
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
+  const langMenuRef = useRef<HTMLDivElement>(null);
+  const closeLangMenu = useCallback(() => setIsLangMenuOpen(false), []);
+  useClickOutside(langMenuRef, isLangMenuOpen, closeLangMenu);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
@@ -183,7 +187,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
 
             {/* Language Selector */}
-            <div className="relative">
+            <div className="relative" ref={langMenuRef}>
               <button
                 onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
                 aria-label={currentLang.native}

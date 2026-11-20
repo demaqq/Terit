@@ -11,6 +11,7 @@ import QRCode from 'qrcode';
 import { InventoryItem } from '../types/inventory';
 import { useInventory } from '../context/InventoryContext';
 import { fmt } from '../i18n/fmt';
+import { backdrop } from '../lib/dismiss';
 
 interface BarcodeModalProps {
   isOpen: boolean;
@@ -109,7 +110,7 @@ export const BarcodeModal: React.FC<BarcodeModalProps> = ({ isOpen, onClose, ite
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex p-3 sm:p-5 bg-slate-900/55 dark:bg-slate-950/75 backdrop-blur-md overflow-y-auto">
+    <div {...backdrop(onClose)} className="fixed inset-0 z-50 flex p-3 sm:p-5 bg-slate-900/55 dark:bg-slate-950/75 backdrop-blur-md overflow-y-auto">
       <div className="terit-modal rounded-3xl max-w-xl w-full p-5 sm:p-7 relative m-auto max-h-[92dvh] overflow-y-auto text-slate-900 dark:text-slate-100 transition-colors">
         <button
           onClick={onClose}

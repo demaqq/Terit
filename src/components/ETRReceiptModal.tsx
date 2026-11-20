@@ -8,6 +8,7 @@ import {
 } from '../lib/ethiopianTax';
 import { printViaWindow, WebSerialPrinter } from '../lib/posHardware';
 import { useToast } from './Toast';
+import { backdrop } from '../lib/dismiss';
 
 interface ETRReceiptModalProps {
   isOpen: boolean;
@@ -94,7 +95,7 @@ export const ETRReceiptModal: React.FC<ETRReceiptModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-200">
+    <div {...backdrop(onClose)} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-200">
       <div className="terit-modal rounded-3xl max-w-xl w-full p-6 sm:p-7 space-y-5 text-slate-900 dark:text-slate-100 shadow-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between border-b border-slate-900/10 dark:border-white/10 pb-4">
           <div className="flex items-center gap-2.5">

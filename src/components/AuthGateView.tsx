@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   Boxes,
   Globe,
@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
 import { SupportedLanguage } from '../i18n/translations';
+import { useClickOutside } from '../lib/dismiss';
 
 export const AuthGateView: React.FC = () => {
   const {
@@ -34,6 +35,9 @@ export const AuthGateView: React.FC = () => {
   } = useInventory();
 
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
+  const langMenuRef = useRef<HTMLDivElement>(null);
+  const closeLangMenu = useCallback(() => setIsLangMenuOpen(false), []);
+  useClickOutside(langMenuRef, isLangMenuOpen, closeLangMenu);
 
   const languages: { id: SupportedLanguage; label: string; native: string }[] = [
     { id: 'en', label: 'English', native: 'English' },
@@ -66,7 +70,7 @@ export const AuthGateView: React.FC = () => {
 
           <div className="flex items-center gap-2">
             {/* Language Selector */}
-            <div className="relative">
+            <div className="relative" ref={langMenuRef}>
               <button
                 type="button"
                 onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}

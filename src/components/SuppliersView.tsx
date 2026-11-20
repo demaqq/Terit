@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
 import { Supplier } from '../types/inventory';
+import { backdrop } from '../lib/dismiss';
 
 interface SuppliersViewProps {
   onOpenAddSupplier: () => void;
@@ -191,7 +192,7 @@ export const SuppliersView: React.FC<SuppliersViewProps> = ({
 
       {/* Delete Supplier Confirmation Modal */}
       {supplierToDelete && (
-        <div className="fixed inset-0 z-50 flex p-4 bg-slate-900/55 dark:bg-slate-950/75 backdrop-blur-md overflow-y-auto">
+        <div {...backdrop(() => setSupplierToDelete(null))} className="fixed inset-0 z-50 flex p-4 bg-slate-900/55 dark:bg-slate-950/75 backdrop-blur-md overflow-y-auto">
           <div className="terit-modal rounded-3xl max-w-sm w-full p-6 space-y-4 m-auto text-slate-900 dark:text-slate-100">
             <div className="flex items-start justify-between gap-2">
               <div className="w-10 h-10 rounded-full bg-rose-500/10 text-rose-500 flex items-center justify-center shrink-0">

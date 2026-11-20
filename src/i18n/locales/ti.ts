@@ -1312,6 +1312,14 @@ const dict: Record<string, string> = {
   "option_new_category_ph": "ንኣብነት፦ ናይ ጸሓይ ፍርያት",
   "option_new_unit_ph": "ንኣብነት፦ ኲንታል፣ ጣሳ፣ ጥቕሎ",
   "option_add_confirm": "ወስኽ",
+  "copilot_resize": "መጠኑ ንምቕያር ስሓቡ",
+  "copilot_size_larger": "ኣግፍሕ",
+  "copilot_size_smaller": "ኣጽብብ",
+  "copilot_teach_title": "ኮፓይለት ምሃሩ",
+  "copilot_teach_help": "ኮፓይለት ኣብ ክምችትኹም ዘይርእዮ ሓቅታት ንግድኹም ንገርዎ፦ ዝተሰማማዕኩምሉ ዋጋታት፣ ጽቡቓት ኣቕረብቲ፣ ሕግታት ልቓሕ፣ ዝበዝሖ መዓልታት፣ ፈጺምኩም ዘይትሸጥዎ። ኣብ ነፍሲ ወከፍ መልሲ ይጥቀመሉ።",
+  "copilot_teach_placeholder": "ንኣብነት፦ ሲሚንቶ ካብ ዳንጎተ ብኣበበ ትሬዲንግ ብ7 መዓልቲ ልቓሕ ንዕድግ። ልዕሊ 100,000 ብር ንዝእዝዙ ኮንትራክተራት 3% ቅናሽ። ቀዳም እቲ ዝበዝሖ መዓልቲ እዩ። ንሓደስቲ ዓማዊል ብልቓሕ ኣይንሸጥን።",
+  "copilot_teach_save": "ዓቅብ",
+  "copilot_teach_saved": "ተዓቂቡ — ኮፓይለት ክጥቀመሉ እዩ",
 };
 
 export default dict;
