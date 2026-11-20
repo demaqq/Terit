@@ -16,8 +16,7 @@ import {
   Maximize2,
   Minimize2,
   GraduationCap,
-  GripVertical,
-} from 'lucide-react';
+  } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
 import { ChatMessage } from '../types/inventory';
 import { loadCreditRecords, isOverdue } from '../lib/creditRecords';
@@ -123,30 +122,45 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({ isOpen, onClos
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Width of the copilot panel on tablets and desktops (phones always use the full screen).
-  // People can drag the left edge or use the size button; the choice is remembered.
-  const SIZES = [400, 560, 820];
-  const clampWidth = (w: number) => Math.round(Math.min(Math.max(w, 340), Math.max(360, window.innerWidth - 24)));
-  const [width, setWidth] = useState<number>(() => {
+  // Size of the floating copilot window on tablets and desktops (phones get a bottom sheet).
+  // Three presets via the size button, or drag the top-left corner; the choice is remembered.
+  const SIZES = [
+    { w: 360, h: 520 },
+    { w: 440, h: 640 },
+    { w: 680, h: 9999 },
+  ];
+  const fit = (sz: { w: number; h: number }) => ({
+    w: Math.round(Math.min(Math.max(sz.w, 320), window.innerWidth - 32)),
+    h: Math.round(Math.min(Math.max(sz.h, 380), window.innerHeight - 32)),
+  });
+  const [size, setSize] = useState<{ w: number; h: number }>(() => {
     try {
-      const saved = Number(localStorage.getItem('terit_copilot_width'));
-      return saved > 0 ? saved : SIZES[1];
+      const saved = JSON.parse(localStorage.getItem('terit_copilot_size') || 'null');
+      if (saved && saved.w > 0 && saved.h > 0) return saved;
     } catch {
-      return SIZES[1];
+      /* ignore */
     }
+    return SIZES[0];
   });
   useEffect(() => {
     try {
-      localStorage.setItem('terit_copilot_width', String(width));
+      localStorage.setItem('terit_copilot_size', JSON.stringify(size));
     } catch {
       /* storage unavailable: keep the size for this visit only */
     }
-  }, [width]);
-  const isWide = width >= SIZES[2] - 20;
-  const cycleSize = () => setWidth((w) => clampWidth(SIZES.find((x) => x > w + 20) ?? SIZES[0]));
+  }, [size]);
+  const shown = typeof window === 'undefined' ? size : fit(size);
+  const isWide = shown.w >= SIZES[2].w - 20;
+  const cycleSize = () =>
+    setSize((cur) => {
+      const now = fit(cur);
+      const next = SIZES.find((p) => fit(p).w > now.w + 20 || (fit(p).w >= now.w - 20 && fit(p).h > now.h + 20));
+      return next || SIZES[0];
+    });
   const startResize = (e: React.PointerEvent) => {
     e.preventDefault();
-    const move = (ev: PointerEvent) => setWidth(clampWidth(window.innerWidth - ev.clientX));
+    // The window is anchored bottom-right, so dragging the top-left corner up/left grows it.
+    const move = (ev: PointerEvent) => setSize(fit({ w: window.innerWidth - 16 - ev.clientX, h: window.innerHeight - 16 - ev.clientY }));
     const up = () => {
       document.removeEventListener('pointermove', move);
       document.removeEventListener('pointerup', up);
@@ -700,33 +714,30 @@ Ask me in **English**, **አማርኛ**, **Afaan Oromoo**, **ትግርኛ**, or 
       hidden={!isOpen}
       role="dialog"
       aria-label={t('copilot_btn')}
-      style={{ ['--copilot-w' as string]: `${width}px` }}
-      className="fixed inset-y-0 right-0 z-50 h-[100dvh] w-full sm:w-[var(--copilot-w)] max-w-full terit-modal rounded-none sm:rounded-l-3xl border-y-0 border-r-0 flex flex-col text-slate-900 dark:text-slate-100 transition-colors shadow-2xl"
+      style={{ ['--copilot-w' as string]: `${shown.w}px`, ['--copilot-h' as string]: `${shown.h}px` }}
+      className="fixed z-50 inset-x-0 bottom-0 h-[82dvh] rounded-t-3xl sm:inset-x-auto sm:bottom-4 sm:right-4 sm:w-[var(--copilot-w)] sm:h-[var(--copilot-h)] sm:rounded-3xl terit-modal flex flex-col overflow-hidden text-slate-900 dark:text-slate-100 transition-colors shadow-2xl"
     >
-      {/* Drag the left edge to resize (tablet and desktop) */}
+      {/* Drag the top-left corner to resize (tablet and desktop) */}
       <div
         onPointerDown={startResize}
         onDoubleClick={cycleSize}
         role="separator"
-        aria-orientation="vertical"
         aria-label={t('copilot_resize')}
         title={t('copilot_resize')}
-        className="hidden sm:flex absolute left-0 top-0 bottom-0 w-3 -ml-1.5 z-10 cursor-ew-resize items-center justify-center group"
+        className="hidden sm:flex absolute left-2 top-2 w-5 h-5 z-20 cursor-nwse-resize items-start justify-start p-0.5 group"
       >
-        <span className="h-12 w-1.5 rounded-full bg-slate-400/40 group-hover:bg-amber-500 transition-colors flex items-center justify-center">
-          <GripVertical className="w-3 h-3 text-transparent group-hover:text-white" />
-        </span>
+        <span className="w-2.5 h-2.5 border-l-2 border-t-2 rounded-tl-md border-slate-400/60 group-hover:border-amber-500 transition-colors" />
       </div>
       {/* Top Header */}
-      <div className="p-4 border-b border-slate-200 dark:border-white/10 flex items-center justify-between gap-2 bg-white/90 dark:bg-slate-950/60 shrink-0">
+      <div className="px-3.5 py-2.5 border-b border-slate-200 dark:border-white/10 flex items-center justify-between gap-2 bg-white/90 dark:bg-slate-950/60 shrink-0">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
             <BotMessageSquare className="w-4 h-4" />
           </div>
           <div className="min-w-0">
-            <h3 className="font-bold text-sm flex flex-wrap items-center gap-1.5">
+            <h3 className="font-bold text-sm flex flex-wrap items-center gap-1.5 min-w-0">
               <span>{t('copilot_btn')}</span>
-              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 whitespace-nowrap">
+              <span title={activeNicheLabel} className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 whitespace-nowrap truncate max-w-full">
                 {activeNicheLabel}
               </span>
             </h3>
@@ -788,7 +799,7 @@ Ask me in **English**, **አማርኛ**, **Afaan Oromoo**, **ትግርኛ**, or 
           <textarea
             value={notesDraft}
             onChange={(e) => setNotesDraft(e.target.value.slice(0, 2000))}
-            rows={5}
+            rows={3}
             placeholder={t('copilot_teach_placeholder')}
             aria-label={t('copilot_teach_title')}
             className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white placeholder:text-slate-500 focus:outline-none focus:border-amber-500 resize-y"
@@ -811,7 +822,7 @@ Ask me in **English**, **አማርኛ**, **Afaan Oromoo**, **ትግርኛ**, or 
       )}
 
       {/* Mode Selector Bar */}
-      <div className="px-4 py-2 bg-slate-100/90 dark:bg-slate-950/40 border-b border-slate-200 dark:border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs shrink-0">
+      <div className="px-3.5 py-1.5 bg-slate-100/90 dark:bg-slate-950/40 border-b border-slate-200 dark:border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs shrink-0">
         <span className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold">{t('copilot_model_engine')}:</span>
         <div className="flex items-center gap-1 p-0.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg shadow-2xs">
           <button
@@ -856,7 +867,7 @@ Ask me in **English**, **አማርኛ**, **Afaan Oromoo**, **ትግርኛ**, or 
       </div>
 
       {/* Scrollable Message Thread */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 min-h-0 overflow-y-auto px-3.5 py-3 space-y-3">
         {messages.map((msg) => {
           const isUser = msg.role === 'user';
           return (
@@ -930,7 +941,7 @@ Ask me in **English**, **አማርኛ**, **Afaan Oromoo**, **ትግርኛ**, or 
       </div>
 
       {/* Suggested Quick Prompts */}
-      <div className="px-4 py-2.5 border-t border-slate-200 dark:border-slate-800/80 bg-slate-50/90 dark:bg-slate-950/40 shrink-0">
+      <div className="px-3.5 py-2 border-t border-slate-200 dark:border-slate-800/80 bg-slate-50/90 dark:bg-slate-950/40 shrink-0">
         <div className="text-[10px] uppercase font-bold tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
           {activeNicheLabel} · {t('copilot_quick_prompts')}:
         </div>
@@ -948,7 +959,7 @@ Ask me in **English**, **አማርኛ**, **Afaan Oromoo**, **ትግርኛ**, or 
       </div>
 
       {/* Input Form */}
-      <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shrink-0">
+      <div className="px-3.5 py-2.5 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shrink-0">
         <form
           onSubmit={(e) => {
             e.preventDefault();
