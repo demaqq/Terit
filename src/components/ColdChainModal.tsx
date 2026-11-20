@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Thermometer, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
+import { backdrop } from '../lib/dismiss';
 
 interface ColdChainModalProps {
   isOpen: boolean;
@@ -47,7 +48,7 @@ export const ColdChainModal: React.FC<ColdChainModalProps> = ({ isOpen, onClose 
     : null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs">
+    <div {...backdrop(onClose)} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs">
       <div className="terit-modal rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl relative text-slate-900 dark:text-slate-100 transition-colors">
         <button
           onClick={onClose}

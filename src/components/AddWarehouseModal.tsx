@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Warehouse as WarehouseIcon } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
 import { useToast } from '../components/Toast';
+import { backdrop } from '../lib/dismiss';
 
 interface AddWarehouseModalProps {
   isOpen: boolean;
@@ -37,7 +38,7 @@ export const AddWarehouseModal: React.FC<AddWarehouseModalProps> = ({ isOpen, on
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex p-3 sm:p-5 bg-slate-900/55 dark:bg-slate-950/75 backdrop-blur-md overflow-y-auto">
+    <div {...backdrop(onClose)} className="fixed inset-0 z-50 flex p-3 sm:p-5 bg-slate-900/55 dark:bg-slate-950/75 backdrop-blur-md overflow-y-auto">
       <div className="terit-modal rounded-3xl max-w-md w-full p-5 sm:p-7 relative m-auto max-h-[92dvh] overflow-y-auto text-slate-900 dark:text-slate-100 transition-colors">
         <button
           onClick={onClose}

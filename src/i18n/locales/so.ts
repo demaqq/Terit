@@ -1312,6 +1312,14 @@ const dict: Record<string, string> = {
   "option_new_category_ph": "tusaale: Alaabta qorraxda",
   "option_new_unit_ph": "tusaale: kuintaal, qasac, xidhmo",
   "option_add_confirm": "Ku dar",
+  "copilot_resize": "Jiid si aad u beddesho cabbirka",
+  "copilot_size_larger": "Ballaadhi",
+  "copilot_size_smaller": "Yaree ballaca",
+  "copilot_teach_title": "Bar Copilot",
+  "copilot_teach_help": "U sheeg Copilot xaqiiqooyinka ganacsigaaga ee aanu ku arki karin kaydka: qiimayaasha aad ku heshiiseen, qeybiyayaasha ugu fiican, xeerarka deynta, maalmaha mashquulka ah, waxaadan weligaa iibin. Jawaab kasta ayuu ku isticmaalaa.",
+  "copilot_teach_placeholder": "tusaale: Sibidhka waxaan ka iibsannaa Dangote annagoo maraynna Abebe Trading, deyn 7 maalmood ah. Qandaraaslayaashu waxay helaan 3% dalabyada ka badan 100,000 ETB. Sabtidu waa maalinta ugu mashquulsan. Macaamiisha cusub deyn kuma iibinno.",
+  "copilot_teach_save": "Kaydi",
+  "copilot_teach_saved": "Waa la kaydiyay — Copilot ayaa isticmaali doona",
 };
 
 export default dict;

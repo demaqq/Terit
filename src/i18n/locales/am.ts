@@ -1312,6 +1312,14 @@ const dict: Record<string, string> = {
   "option_new_category_ph": "ለምሳሌ፦ የሶላር ምርቶች",
   "option_new_unit_ph": "ለምሳሌ፦ ኩንታል፣ ጣሳ፣ ጥቅል",
   "option_add_confirm": "ጨምር",
+  "copilot_resize": "መጠኑን ለመቀየር ይጎትቱ",
+  "copilot_size_larger": "አስፋ",
+  "copilot_size_smaller": "አጥብብ",
+  "copilot_teach_title": "ኮፓይለትን አስተምሩ",
+  "copilot_teach_help": "ኮፓይለት በክምችትዎ ውስጥ የማያያቸውን የንግድዎን እውነታዎች ይንገሩት፦ የተስማሙባቸው ዋጋዎች፣ ምርጥ አቅራቢዎች፣ የዱቤ ደንቦች፣ የሥራ የሚበዛባቸው ቀናት፣ ፈጽሞ የማይሸጡት። በእያንዳንዱ መልስ ይጠቀምባቸዋል።",
+  "copilot_teach_placeholder": "ለምሳሌ፦ ሲሚንቶ ከዳንጎቴ በአበበ ትሬዲንግ በኩል በ7 ቀን ዱቤ እንገዛለን። ከ100,000 ብር በላይ ለሚያዙ ተቋራጮች 3% ቅናሽ። ቅዳሜ በጣም ሥራ የሚበዛበት ቀን ነው። ለአዲስ ደንበኞች በዱቤ አንሸጥም።",
+  "copilot_teach_save": "አስቀምጥ",
+  "copilot_teach_saved": "ተቀምጧል — ኮፓይለት ይጠቀምበታል",
 };
 
 export default dict;

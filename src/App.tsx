@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useEffect, useState } from 'react';
+import React, { Suspense, lazy, useCallback, useEffect, useState } from 'react';
 import { InventoryProvider, useInventory } from './context/InventoryContext';
 import { translateStatic } from './i18n/translations';
 import { Navbar } from './components/Navbar';
@@ -119,6 +119,11 @@ function AppContent() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatMounted, setChatMounted] = useState(false);
+  useEffect(() => {
+    if (isChatOpen) setChatMounted(true);
+  }, [isChatOpen]);
+  const closeChat = useCallback(() => setIsChatOpen(false), []);
   const [isPricingOpen, setIsPricingOpen] = useState(false);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [isAlertsOpen, setIsAlertsOpen] = useState(false);
@@ -379,7 +384,8 @@ function AppContent() {
 
       {/* Floating Copilot Quick Button (Desktop) */}
       <button
-        onClick={() => setIsChatOpen(true)}
+        data-copilot-toggle=""
+        onClick={() => setIsChatOpen((open) => !open)}
         className="hidden lg:flex fixed bottom-6 right-6 z-30 p-3.5 rounded-full bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 font-bold shadow-xl shadow-amber-500/20 hover:scale-105 transition-all items-center gap-2 group cursor-pointer"
         title={t('copilot_open_title')}
       >
@@ -456,9 +462,10 @@ function AppContent() {
       )}
 
       {/* AI Copilot Drawer */}
-      {isChatOpen && (
+      {/* Stays mounted after the first open so the conversation survives closing it. */}
+      {chatMounted && (
         <Suspense fallback={null}>
-          <AICopilotDrawer isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
+          <AICopilotDrawer isOpen={isChatOpen} onClose={closeChat} />
         </Suspense>
       )}
 

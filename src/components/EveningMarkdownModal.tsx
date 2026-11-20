@@ -3,6 +3,7 @@ import { X, Tag, RotateCcw, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
 import { InventoryItem } from '../types/inventory';
 import { fmt } from '../i18n/fmt';
+import { backdrop } from '../lib/dismiss';
 
 interface EveningMarkdownModalProps {
   isOpen: boolean;
@@ -59,7 +60,7 @@ export const EveningMarkdownModal: React.FC<EveningMarkdownModalProps> = ({ isOp
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs">
+    <div {...backdrop(onClose)} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs">
       <div className="terit-modal rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl relative text-slate-900 dark:text-slate-100 transition-colors">
         <button onClick={onClose} className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
           <X className="w-5 h-5" />

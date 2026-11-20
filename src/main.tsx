@@ -1,6 +1,9 @@
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
+import { installEscapeToDismiss } from './lib/dismiss';
+
+installEscapeToDismiss();
 import { loadLocale, type SupportedLanguage } from './i18n/translations';
 
 // Fetch the saved language before the first render so non-English users never see

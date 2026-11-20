@@ -24,6 +24,7 @@ import {
 import { useInventory } from '../context/InventoryContext';
 import { MORE_MENU_ITEMS } from '../navigation';
 import { SupportedLanguage } from '../i18n/translations';
+import { backdrop } from '../lib/dismiss';
 
 interface MobileBottomNavProps {
   activeTab: string;
@@ -90,7 +91,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
     <>
       {/* Slide-up "More" Drawer for Secondary Actions on Mobile */}
       {isMoreMenuOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden bg-slate-950/55 backdrop-blur-sm flex flex-col justify-end">
+        <div {...backdrop(() => setIsMoreMenuOpen(false))} className="fixed inset-0 z-50 lg:hidden bg-slate-950/55 backdrop-blur-sm flex flex-col justify-end">
           <div className="bg-white/95 dark:bg-slate-900/85 backdrop-blur-2xl backdrop-saturate-150 border-t border-slate-900/12 dark:border-white/15 rounded-t-3xl p-5 max-h-[82vh] overflow-y-auto space-y-4 shadow-2xl animate-in slide-in-from-bottom duration-200">
             {/* Header */}
             <div className="flex items-center justify-between pb-3 border-b border-slate-900/10 dark:border-white/10">
@@ -113,6 +114,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
             {/* Quick Actions Strip */}
             <div className="grid grid-cols-3 gap-2">
               <button
+                data-copilot-toggle=""
                 onClick={() => {
                   setIsMoreMenuOpen(false);
                   onOpenChat();
@@ -329,6 +331,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
 
         {/* AI Chatbot / Terit Copilot */}
         <button
+          data-copilot-toggle=""
           onClick={() => {
             setIsMoreMenuOpen(false);
             onOpenChat();

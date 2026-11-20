@@ -12,6 +12,7 @@ import { useInventory } from '../context/InventoryContext';
 import { StaffMember, StaffRole, AttendanceLog } from '../types/inventory';
 import { BUSINESS_PRESET_ATTENDANCE, BUSINESS_PRESET_STAFF } from '../data/businessPresets';
 import { fmt } from '../i18n/fmt';
+import { backdrop } from '../lib/dismiss';
 
 export const StaffRosterView: React.FC = () => {
   const { warehouses, businessType, t } = useInventory();
@@ -351,7 +352,7 @@ export const StaffRosterView: React.FC = () => {
 
       {/* MODAL: Add Staff Member */}
       {isAddStaffOpen && (
-        <div className="fixed inset-0 z-50 flex p-3 sm:p-5 bg-slate-900/55 dark:bg-slate-950/75 backdrop-blur-md overflow-y-auto">
+        <div {...backdrop(() => setIsAddStaffOpen(false))} className="fixed inset-0 z-50 flex p-3 sm:p-5 bg-slate-900/55 dark:bg-slate-950/75 backdrop-blur-md overflow-y-auto">
           <div className="terit-modal rounded-3xl max-w-md w-full p-5 sm:p-6 relative text-slate-900 dark:text-slate-100 m-auto max-h-[92dvh] overflow-y-auto">
             <button
               onClick={() => setIsAddStaffOpen(false)}

@@ -1312,6 +1312,14 @@ const dict: Record<string, string> = {
   "option_new_category_ph": "fkn. Oomisha aduu",
   "option_new_unit_ph": "fkn. kuntaala, qorqorroo, hidhaa",
   "option_add_confirm": "Dabali",
+  "copilot_resize": "Hamma jijjiiruuf harkisi",
+  "copilot_size_larger": "Bal'isi",
+  "copilot_size_smaller": "Dhiphisi",
+  "copilot_teach_title": "Copilot barsiisi",
+  "copilot_teach_help": "Waan Copilot kuusaa keessan keessatti hin argine itti himaa: gatii walii galtan, dhiyeessitoota gaarii, seera liqii, guyyoota hojiin itti baay'atu, waan gonkumaa hin gurgurre. Deebii hunda keessatti itti fayyadama.",
+  "copilot_teach_placeholder": "fkn. Simintoo Dangote irraa karaa Abebe Trading liqii guyyaa 7n bitanna. Kontiraaktaroonni ajaja ETB 100,000 ol irratti hir'ina 3% argatu. Sanbatni guyyaa hojiin itti baay'atuudha. Maamiltoota haaraaf liqiin hin gurgurru.",
+  "copilot_teach_save": "Olkaa'i",
+  "copilot_teach_saved": "Olkaa'ameera — Copilot itti fayyadama",
 };
 
 export default dict;

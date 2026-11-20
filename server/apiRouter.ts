@@ -10,7 +10,7 @@ apiRouter.use(express.json({ limit: '1mb' }));
 // Multi-turn chat endpoint
 apiRouter.post('/gemini/chat', async (req: Request, res: Response) => {
   try {
-    const { messages, modelMode, inventoryContext, language, businessType } = req.body;
+    const { messages, modelMode, inventoryContext, language, businessType, businessRules, ownerNotes } = req.body;
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: 'Messages array is required.' });
@@ -23,7 +23,13 @@ apiRouter.post('/gemini/chat', async (req: Request, res: Response) => {
     }
 
     const modelName = modelMode === 'fast' ? 'gemini-3.1-flash-lite' : 'gemini-4-hydrogen';
-    const systemInstruction = buildCopilotSystemPrompt({ language, businessType, inventoryContext });
+    const systemInstruction = buildCopilotSystemPrompt({
+      language,
+      businessType,
+      inventoryContext,
+      businessRules,
+      ownerNotes: typeof ownerNotes === 'string' ? ownerNotes : undefined,
+    });
 
     const contents = messages.map((m: { role: string; content: string }) => ({
       role: m.role === 'assistant' || m.role === 'model' ? 'model' : 'user',

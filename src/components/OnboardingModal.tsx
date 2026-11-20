@@ -28,6 +28,7 @@ import {
   validateCompanyProfileCriteria,
 } from '../lib/validation';
 import { fmt } from '../i18n/fmt';
+import { backdrop } from '../lib/dismiss';
 
 interface OnboardingModalProps {
   isOpen: boolean;
@@ -362,7 +363,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex p-3 sm:p-5 bg-slate-900/55 dark:bg-slate-950/75 backdrop-blur-md overflow-y-auto">
+    <div {...backdrop(allowDismiss ? onClose : () => {})} className="fixed inset-0 z-50 flex p-3 sm:p-5 bg-slate-900/55 dark:bg-slate-950/75 backdrop-blur-md overflow-y-auto">
       <div className="terit-modal rounded-3xl max-w-4xl w-full p-5 sm:p-8 relative m-auto text-slate-900 dark:text-slate-100 transition-colors max-h-[92dvh] flex flex-col">
         {/* Top Dismiss Button */}
         {allowDismiss && (

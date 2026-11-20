@@ -44,6 +44,7 @@ export const OptionSelect: React.FC<{
               e.preventDefault();
               confirm();
             } else if (e.key === 'Escape') {
+              e.preventDefault();
               setAdding(false);
             }
           }}
