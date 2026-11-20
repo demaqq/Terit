@@ -12,8 +12,7 @@ import {
   ArrowUpDown,
   Crown,
   X,
-  SlidersHorizontal,
-} from 'lucide-react';
+  SlidersHorizontal, BookOpen } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
 import { InventoryItem, ItemStatus } from '../types/inventory';
 import { useToast } from '../components/Toast';
@@ -77,10 +76,12 @@ interface InventoryViewProps {
   onOpenBarcode: (item: InventoryItem) => void;
   onViewItemDetails: (item: InventoryItem) => void;
   onOpenPricing: () => void;
+  onOpenCatalog?: () => void;
 }
 
 export const InventoryView: React.FC<InventoryViewProps> = ({
   onOpenAddItem,
+  onOpenCatalog,
   onOpenEditItem,
   onOpenQuickAdjust,
   onOpenBarcode,
@@ -501,6 +502,17 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
 
         {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-2">
+          {onOpenCatalog && (
+            <button
+              type="button"
+              onClick={onOpenCatalog}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-800 dark:text-amber-300 text-xs font-semibold border border-amber-500/30 cursor-pointer transition-colors"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>{t('catalog_open_btn')}</span>
+            </button>
+          )}
+
           {/* CSV Import */}
           <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold border border-slate-300 dark:border-slate-700 cursor-pointer transition-colors">
             <Upload className="w-3.5 h-3.5 text-slate-500" />

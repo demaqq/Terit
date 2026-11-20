@@ -4,6 +4,8 @@ import { useInventory } from '../context/InventoryContext';
 import { InventoryItem } from '../types/inventory';
 import { BUSINESS_TYPES } from '../i18n/translations';
 import { allowsFraction } from '../data/businessProfiles';
+import { useStockOptions } from '../lib/useStockOptions';
+import { OptionSelect } from './OptionSelect';
 import { BUSINESS_NICHE_CONFIG } from '../data/businessPresets';
 import { useToast } from '../components/Toast';
 
@@ -20,6 +22,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
 }) => {
   const { addItem, updateItem, quickAdjustStock, suppliers, warehouses, businessType, profile, t } = useInventory();
   const currentBiz = BUSINESS_TYPES.find((b) => b.id === businessType) || BUSINESS_TYPES[0];
+  const stockOptions = useStockOptions();
   const nicheConfig = BUSINESS_NICHE_CONFIG[businessType] || BUSINESS_NICHE_CONFIG.shop;
   const { toast } = useToast();
 
@@ -398,32 +401,30 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">{t('category_label')}</label>
-              <select
+              <OptionSelect
+                id="item-category"
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                options={stockOptions.categories}
+                onChange={setCategory}
+                onAdd={(v) => stockOptions.addCustom('category', v)}
+                addLabel={t('option_add_category')}
+                placeholder={t('option_new_category_ph')}
                 className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-amber-500"
-              >
-                {currentBiz.defaultCategories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
 
             <div>
               <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">{t('unit_of_measure_label')}</label>
-              <select
+              <OptionSelect
+                id="item-unit"
                 value={unitOfMeasure}
-                onChange={(e) => setUnitOfMeasure(e.target.value)}
+                options={stockOptions.units}
+                onChange={setUnitOfMeasure}
+                onAdd={(v) => stockOptions.addCustom('unit', v)}
+                addLabel={t('option_add_unit')}
+                placeholder={t('option_new_unit_ph')}
                 className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-amber-500"
-              >
-                {currentBiz.defaultUnits.map((u) => (
-                  <option key={u} value={u}>
-                    {u}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
           </div>
 

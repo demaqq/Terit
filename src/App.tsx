@@ -43,6 +43,7 @@ const PurchaseOrdersView = lazy(() => import('./components/PurchaseOrdersView').
 const SuppliersView = lazy(() => import('./components/SuppliersView').then((m) => ({ default: m.SuppliersView })));
 const WarehousesView = lazy(() => import('./components/WarehousesView').then((m) => ({ default: m.WarehousesView })));
 const ReportsView = lazy(() => import('./components/ReportsView').then((m) => ({ default: m.ReportsView })));
+const CatalogView = lazy(() => import('./components/CatalogView').then((m) => ({ default: m.CatalogView })));
 const CreditLedgerView = lazy(() => import('./components/CreditLedgerView').then((m) => ({ default: m.CreditLedgerView })));
 const StaffRosterView = lazy(() => import('./components/StaffRosterView').then((m) => ({ default: m.StaffRosterView })));
 const LedgerView = lazy(() => import('./components/LedgerView').then((m) => ({ default: m.LedgerView })));
@@ -317,10 +318,13 @@ function AppContent() {
                 onOpenBarcode={handleOpenBarcode}
                 onViewItemDetails={handleViewItemDetails}
                 onOpenPricing={() => setIsPricingOpen(true)}
+                onOpenCatalog={() => setActiveTab('catalog')}
               />
             )}
 
             {activeTab === 'credit' && <CreditLedgerView />}
+
+            {activeTab === 'catalog' && <CatalogView onOpenAddItem={handleOpenAddItem} />}
 
             {activeTab === 'staff' && <StaffRosterView />}
 

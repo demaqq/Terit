@@ -12,6 +12,7 @@ import {
   Users,
   Warehouse,
   Boxes,
+  BookOpen,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -33,6 +34,7 @@ export const PRIMARY_NAV: NavItem[] = [
 ];
 
 export const SECONDARY_NAV: NavItem[] = [
+  { id: 'catalog', labelKey: 'nav_catalog', Icon: BookOpen, iconClass: 'text-amber-500' },
   { id: 'ledger', labelKey: 'nav_ledger', Icon: Receipt, iconClass: 'text-emerald-500' },
   { id: 'warehouses', labelKey: 'nav_warehouses', Icon: Warehouse, iconClass: 'text-rose-500' },
   { id: 'suppliers', labelKey: 'nav_suppliers', Icon: Building2, iconClass: 'text-indigo-500' },
